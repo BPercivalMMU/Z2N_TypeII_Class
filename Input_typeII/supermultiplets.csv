@@ -1,0 +1,12 @@
+susy_level,name,n0,n_half,n1,n_3half,n2,notes
+1,G_N1,0,0,0,1,1,Supergravity multiplet N=1
+1,RS_N1,0,0,1,1,0,Rarita-Schwinger multiplet N=1
+1,V_N1,0,1,1,0,0,Vector multiplet N=1
+1,Chiral_N1,2,1,0,0,0,Chiral (scalar) multiplet N=1
+2,G_N2,0,0,1,2,1,Supergravity multiplet (Table 19 Z2n_Class)
+2,RS_N2,0,1,2,1,0,Rarita-Schwinger multiplet (Table 19 Z2n_Class)
+2,V_N2,2,2,1,0,0,Vector multiplet (Table 19 Z2n_Class)
+2,H_N2,4,2,0,0,0,Full hypermultiplet (Table 19 Z2n_Class)
+2,Half_H_N2,2,1,0,0,0,Half-hypermultiplet self-conjugate (Table 19 Z2n_Class)
+6,G_N6,30,26,16,6,1,Supergravity multiplet N=6 (h_max=2; note V_N6 has identical spin content due to CPT structure at N=6)
+6,RS_N6,20,15,6,1,0,Rarita-Schwinger multiplet N=6 (h_max=3/2; CPT self-conjugate since h_max=n_susy/4=1.5)
