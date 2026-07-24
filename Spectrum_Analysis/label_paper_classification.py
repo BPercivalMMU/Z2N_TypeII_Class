@@ -88,6 +88,64 @@ def _parse_tuple_cell(x) -> tuple:
     return tuple(ast.literal_eval(str(x).strip()))
 
 
+def _idx_set(vals) -> tuple:
+    """1-based positions where vals[i] == 1, e.g. (1,0,1,0) -> (1,3)."""
+    return tuple(i + 1 for i, v in enumerate(vals) if int(v) == 1)
+
+
+# ── Fine (sub-numbered) sub-case tables ─────────────────────────────────────
+# Keys are (b1_own, b1_bar, bb1_own, bb1_bar) / (b1_own, b1_bar, AE_letter)
+# index-set tuples, transcribed from the paper's classification table and
+# verified row-for-row (bijectively, no ambiguity) against every row
+# currently in the corresponding canonical CSV.
+
+FINE_Z2L_Z2R = {
+    ((), (), (), ()): "i-i",
+    ((1,), (1,), (), ()): "ii-i",
+    ((1, 2), (1, 2), (), ()): "iii-i",
+    ((), (), (1,), (1,)): "i-ii",
+    ((), (), (1, 2), (1, 2)): "i-iii",
+    ((1,), (1,), (1,), (1,)): "ii-ii.1",
+    ((1,), (2,), (1,), (2,)): "ii-ii.2",
+    ((1,), (3,), (1,), (3,)): "ii-ii.3",
+    ((1, 2), (1, 2), (1,), (1,)): "iii-ii.1",
+    ((1, 2), (2, 3), (1,), (3,)): "iii-ii.2",
+    ((1, 2), (3, 4), (1,), (1,)): "iii-ii.3",
+    ((1,), (1,), (1, 2), (1, 2)): "ii-iii.1",
+    ((1,), (3,), (1, 2), (2, 3)): "ii-iii.2",
+    ((1,), (1,), (1, 2), (3, 4)): "ii-iii.3",
+    ((1, 2), (1, 2), (1, 2), (1, 2)): "iii-iii.1",
+    ((1, 2), (1, 3), (1, 2), (1, 3)): "iii-iii.2",
+    ((1, 2), (3, 4), (1, 2), (3, 4)): "iii-iii.3",
+}
+
+FINE_Z2L_Z2 = {
+    ((), (), "A"): "i-A",
+    ((1,), (1,), "A"): "ii-A.1",
+    ((1,), (5,), "A"): "ii-A.2",
+    ((1, 2), (1, 2), "A"): "iii-A.1",
+    ((1, 2), (1, 5), "A"): "iii-A.2",
+    ((1, 2), (5, 6), "A"): "iii-A.3",
+    ((1,), (3,), "B"): "ii-B",
+    ((1, 2), (1, 3), "B"): "iii-B.1",
+    ((1, 2), (3, 5), "B"): "iii-B.2",
+    ((1, 2), (3, 6), "B"): "iii-B.3",
+    ((1,), (3,), "C"): "ii-C",
+    ((1, 2), (1, 3), "C"): "iii-C.1",
+    ((1, 2), (3, 5), "C"): "iii-C.2",
+    ((1, 2), (3, 4), "D"): "iii-D",
+    ((), (), "E"): "i-E",
+    ((1,), (1,), "E"): "ii-E.1",
+    ((1,), (5,), "E"): "ii-E.2",
+    ((1,), (6,), "E"): "ii-E.3",
+    ((1, 2), (1, 2), "E"): "iii-E.1",
+    ((1, 2), (1, 5), "E"): "iii-E.2",
+    ((1, 2), (1, 6), "E"): "iii-E.3",
+    ((1, 2), (3, 4), "E"): "iii-E.4",
+    ((1, 2), (5, 6), "E"): "iii-E.5",
+}
+
+
 # ── Per-class label builders ────────────────────────────────────────────────
 
 def label_Z2(row) -> str:
@@ -109,15 +167,24 @@ def label_Z2L_2(row) -> str:
 
 
 def label_Z2L_Z2R(row) -> str:
-    b1 = label_i_iii(row["n1"], row["n2"])
-    bb1 = label_i_iii(row["k1"], row["k2"])
-    return f"{b1}-{bb1}"
+    b1_own = _idx_set([row["n1"], row["n2"]])
+    b1_bar = _idx_set([row[f"N{i}"] for i in range(1, 7)])
+    bb1_own = _idx_set([row["k1"], row["k2"]])
+    bb1_bar = _idx_set([row[f"K{i}"] for i in range(1, 7)])
+    key = (b1_own, b1_bar, bb1_own, bb1_bar)
+    if key not in FINE_Z2L_Z2R:
+        raise ValueError(f"Unexpected Z2L_Z2R fine pattern: {key}")
+    return FINE_Z2L_Z2R[key]
 
 
 def label_Z2L_Z2(row) -> str:
-    b1 = label_i_iii(row["n1"], row["n2"])
+    b1_own = _idx_set([row["n1"], row["n2"]])
+    b1_bar = _idx_set([row[f"N{i}"] for i in range(1, 7)])
     ae = label_A_E(row["m3"], row["m4"], row["m5"], row["m6"])
-    return f"{b1}-{ae}"
+    key = (b1_own, b1_bar, ae)
+    if key not in FINE_Z2L_Z2:
+        raise ValueError(f"Unexpected Z2L_Z2 fine pattern: {key}")
+    return FINE_Z2L_Z2[key]
 
 
 def label_Z2L_Z2R_Z2(row) -> str:
