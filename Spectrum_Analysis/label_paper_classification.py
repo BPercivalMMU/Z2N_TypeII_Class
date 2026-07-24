@@ -119,6 +119,40 @@ FINE_Z2L_Z2R = {
     ((1, 2), (3, 4), (1, 2), (3, 4)): "iii-iii.3",
 }
 
+FINE_Z2L_2_Z2R = {
+    # key = (b1_own, b1_bar, b2_own, b2_bar, bb1_own, bb1_bar)
+    ((), (), (), (), (), ()): "I-i",
+    ((), (), (3, 5), (1,), (), ()): "II-i",
+    ((), (), (3, 4, 5, 6), (1, 2), (), ()): "III-i",
+    ((1,), (1,), (3, 5, 6), (2,), (), ()): "IV-i",
+    ((), (), (3, 5), (3,), (1,), (1,)): "II-ii",
+    ((), (), (3, 4, 5, 6), (2, 4), (1,), (1,)): "III-ii",
+    ((1,), (2,), (3, 5, 6), (3,), (1,), (2,)): "IV-ii.1",
+    ((1,), (3,), (3, 5, 6), (2,), (1,), (4,)): "IV-ii.2",
+    ((1,), (3,), (3, 5, 6), (4,), (1,), (5,)): "IV-ii.3",
+    ((1, 2), (2, 3), (3, 4, 5, 6), (2, 4), (1,), (5,)): "V-ii.1",
+    ((1, 2), (2, 3), (3, 4, 5, 6), (3, 4), (1,), (3,)): "V-ii.2",
+    ((1, 2), (3, 4), (3, 4, 5, 6), (2, 3), (1,), (1,)): "V-ii.3",
+    ((), (), (3, 5), (1,), (1, 2), (1, 2)): "II-iii",
+    ((), (), (3, 4, 5, 6), (3, 4), (1, 2), (1, 2)): "III-iii",
+    ((1,), (1,), (3, 5, 6), (2,), (1, 2), (5, 6)): "IV-iii.1",
+    ((1,), (1,), (3, 5, 6), (3,), (1, 2), (4, 5)): "IV-iii.2",
+    ((1,), (3,), (3, 5, 6), (1,), (1, 2), (2, 5)): "IV-iii.3",
+    ((1,), (3,), (3, 5, 6), (4,), (1, 2), (2, 4)): "IV-iii.4",
+    # commented-out / superseded alt representatives (same physics, verified via source)
+    ((1,), (2,), (3, 5, 6), (1,), (1, 2), (5, 6)): "IV-iii.3",
+    ((1,), (2,), (3, 5, 6), (3,), (1, 2), (4, 5)): "IV-iii.4",
+    ((1, 2), (1, 3), (3, 4, 5, 6), (3, 4), (1, 2), (1, 5)): "V-iii.1",
+    ((1, 2), (3, 4), (3, 4, 5, 6), (1, 3), (1, 2), (3, 5)): "V-iii.2",
+    ((1, 2), (1, 3), (3, 4, 5, 6), (1, 4), (1, 2), (1, 3)): "V-iii.3",
+    ((1, 2), (1, 2), (3, 4), (3, 4), (1, 2), (1, 2)): "VI-iii.1",
+    ((1, 2), (3, 4), (3, 4), (1, 2), (1, 2), (3, 4)): "VI-iii.2",
+    ((1, 2), (3, 4), (3, 4), (1, 5), (1, 2), (3, 5)): "VI-iii.3",
+    ((1, 2), (1, 3), (3, 4), (2, 4), (1, 2), (1, 3)): "VI-iii.4",
+    ((1, 2), (1, 3), (3, 4), (4, 5), (1, 2), (1, 5)): "VI-iii.5",
+    ((1, 2), (3, 4), (3, 4), (5, 6), (1, 2), (5, 6)): "VI-iii.6",
+}
+
 FINE_Z2L_Z2 = {
     ((), (), "A"): "i-A",
     ((1,), (1,), "A"): "ii-A.1",
@@ -198,9 +232,25 @@ def label_Z2L_2_Z2R(row) -> str:
     n12 = _parse_tuple_cell(row["n12"])
     m = _parse_tuple_cell(row["m3456"])
     k12 = _parse_tuple_cell(row["k12"])
+    N = _parse_tuple_cell(row["N"])
+    M = _parse_tuple_cell(row["M"])
+    K = _parse_tuple_cell(row["K"])
     ivi = label_I_VI(n12[0], n12[1], m[0], m[1], m[2], m[3])
     bb1 = label_i_iii(k12[0], k12[1])
-    return f"{ivi}-{bb1}"
+    coarse = f"{ivi}-{bb1}"
+
+    key = (
+        _idx_set(n12), _idx_set(N),
+        tuple(i + 3 for i, v in enumerate(m) if int(v) == 1), _idx_set(M),
+        _idx_set(k12), _idx_set(K),
+    )
+    fine = FINE_Z2L_2_Z2R.get(key)
+    if fine is None:
+        print(f"  [Z2L_2_Z2R] no fine match for key={key}, falling back to coarse label {coarse!r}")
+        return coarse
+    if fine.split(".")[0] != coarse:
+        raise ValueError(f"Fine/coarse mismatch: fine={fine!r} coarse={coarse!r} key={key}")
+    return fine
 
 
 def label_Z2L_2_Z2R_2(row) -> str:
