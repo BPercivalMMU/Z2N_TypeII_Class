@@ -3,8 +3,7 @@
 Classification, from scratch, of the order-two T-fold point groups on the
 SO(12) lattice at the free fermionic point. `Z2L_2_Z2R`, `Z2L_2_Z2R_2`,
 `Z2L_Z2` and `Z2L_Z2R_Z2` each have their own subfolder with a
-`classify_*.py` script; the other point-group subfolders (`Z2L_2`,
-`Z2R_Z2L`) are unrelated legacy checks and not covered here.
+`classify_*.py` script. The other point-groups models are solved analytically and given in the paper.
 
 ## What each script does
 
