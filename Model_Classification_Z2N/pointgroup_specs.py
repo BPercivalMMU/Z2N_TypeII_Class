@@ -1,14 +1,12 @@
 """
 pointgroup_specs.py
 
-Per-point-group data: basis construction, the full parameter range, the input
-file reader and the table 15 transcription.
+Per-point-group data: basis construction, the full parameter range and the
+table 15 transcription.
 """
-import ast
 import itertools
 
 import numpy as np
-import pandas as pd
 
 import FF_equivalence_checker_master as FF
 
@@ -16,16 +14,6 @@ BITS2 = list(itertools.product((0, 1), repeat=2))
 BITS4 = list(itertools.product((0, 1), repeat=4))
 BITS6 = list(itertools.product((0, 1), repeat=6))
 ONE, S, SB = FF.make_one(), FF.make_S(), FF.make_Sbar()
-
-
-def _read(path):
-    df = pd.read_csv(path, dtype=str, encoding="utf-8-sig")
-    df.columns = [c.strip() for c in df.columns]
-    return df
-
-
-_i = lambda r, c: int(str(r[c]).strip())
-_t = lambda x: tuple(int(v) for v in ast.literal_eval(str(x).strip()))
 
 
 # ==========================================================================
@@ -57,15 +45,6 @@ class Z2L_Z2:
         d.update({f"m{i+3}": m3456[i] for i in range(4)})
         d.update({f"N{i+1}": N[i] for i in range(6)})
         return d
-
-    @staticmethod
-    def read(path):
-        df = _read(path)
-        bases = [Z2L_Z2.build([_i(r, "n1"), _i(r, "n2")],
-                              [_i(r, f"N{j}") for j in range(1, 7)],
-                              [_i(r, f"m{j}") for j in range(3, 7)])
-                 for _, r in df.iterrows()]
-        return df, bases
 
     table = {
      "i-A":("b1","b2`2"), "ii-A.1":("b1 + e1`1","b2`2"), "ii-A.2":("b1 + e1`5","b2`2"),
@@ -124,14 +103,6 @@ class Z2L_2_Z2R:
         return {"n12": str(tuple(n12)), "m3456": str(tuple(m3456)),
                 "k12": str(tuple(k12)), "N": str(tuple(N)),
                 "M": str(tuple(M)), "K": str(tuple(K))}
-
-    @staticmethod
-    def read(path):
-        df = _read(path)
-        bases = [Z2L_2_Z2R.build(_t(r["n12"]), _t(r["N"]), _t(r["m3456"]),
-                                 _t(r["M"]), _t(r["k12"]), _t(r["K"]))
-                 for _, r in df.iterrows()]
-        return df, bases
 
     table = {
      "I-i":("b1","b2","b`1"), "II-i":("b1","b2 + e35`1","b`1"),
