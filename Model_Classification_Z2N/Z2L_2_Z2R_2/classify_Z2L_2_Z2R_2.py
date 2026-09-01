@@ -132,8 +132,8 @@ def main():
             basis = np.vstack([ONE, S, SB, a[4], a[5], b[4], b[5]]).astype(np.uint8)
             params = (a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3])
             xi = FF.additive_set(basis)
-            fp = FF.fingerprint(xi)
-            tgt = FF.prep_target(xi)
+            fp = FF.trace_signature(xi)
+            tgt = FF.prepare_target_model(xi)
             hit = None
             for r in reps:
                 if r["fp"] == fp and FF.find_equivalence(r["src"], tgt, r["basis"]):
@@ -142,7 +142,7 @@ def main():
             if hit is None:
                 hit = len(reps)
                 reps.append(dict(id=hit, fp=fp, basis=basis,
-                                 src=FF.prep_source(xi, basis), params=params,
+                                 src=FF.prepare_starting_model(xi, basis), params=params,
                                  twists=list(basis[3:])))
             models.append(params)
             assign.append(hit)
@@ -165,7 +165,7 @@ def main():
                                            tup(row["m"]), tup(row["M"]),
                                            tup(row["k"]), tup(row["K"]),
                                            tup(row["l"]), tup(row["L"]))
-            tgt = FF.prep_target(FF.additive_set(b))
+            tgt = FF.prepare_target_model(FF.additive_set(b))
             lab = str(row.get("PaperLabel", f"row{i+1}")).replace("\u2013", "-")
             for r in reps:
                 if FF.find_equivalence(r["src"], tgt, r["basis"]):
@@ -188,7 +188,7 @@ def main():
     for r in reps:
         d = prow(r["params"])
         d["Label"] = names[r["id"]]
-        d["TwistBasis"] = " ; ".join(FF.describe(t) for t in r["twists"])
+        d["TwistBasis"] = " ; ".join(FF.twist_label(t) for t in r["twists"])
         d["NumberOfMIParameterChoices"] = assign.count(r["id"])
         rows.append(d)
     f1 = os.path.join(args.out_dir, "Z2L_2_Z2R_2_inequivalent.csv")

@@ -29,7 +29,7 @@ import FF_equivalence_checker_master as FF
 
 # --------------------------------------------------------------------------
 def perm_note(g) -> str:
-    l, r = FF.fmt_g(g[0]), FF.fmt_g(g[1])
+    l, r = FF.relabelling_note(g[0]), FF.relabelling_note(g[1])
     if l == r:
         return f"holomorphic and anti-holomorphic indices both: {l}"
     return f"holomorphic: {l}; anti-holomorphic: {r}"
@@ -39,7 +39,7 @@ def basis_note(src_twists, dst_basis, names, g) -> str:
     """Only the generators that must be recombined are listed."""
     changed, same = [], []
     for name, vec in zip(names[3:], src_twists):
-        coef = FF.solve_F2(dst_basis, FF.apply_g(vec, g[0], g[1]))
+        coef = FF.basis_coefficients(dst_basis, FF.apply_g(vec, g[0], g[1]))
         if coef is None:
             return "?"
         terms = [names[j] for j in range(len(coef)) if coef[j]]
@@ -57,7 +57,7 @@ def basis_note(src_twists, dst_basis, names, g) -> str:
 
 def label_lookup(basis: np.ndarray, table: Dict[str, Sequence[str]]) -> str:
     """Match a basis against a table-15 transcription via describe()."""
-    key = " ; ".join(FF.describe(t) for t in basis[3:])
+    key = " ; ".join(FF.twist_label(t) for t in basis[3:])
     inv = {" ; ".join(v): k for k, v in table.items()}
     return inv.get(key, "")
 
@@ -77,7 +77,7 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
 
     buckets: Dict[tuple, List[int]] = {}
     for m in models:
-        buckets.setdefault(FF.fingerprint(m["xi"]), []).append(m["idx"])
+        buckets.setdefault(FF.trace_signature(m["xi"]), []).append(m["idx"])
 
     parent = list(range(n))
 
@@ -89,11 +89,11 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
 
     for members in buckets.values():
         for a in members:
-            A = FF.prep_source(models[a]["xi"], models[a]["basis"])
+            A = FF.prepare_starting_model(models[a]["xi"], models[a]["basis"])
             for b in members:
                 if b <= a or find(a) == find(b):
                     continue
-                if FF.find_equivalence(A, FF.prep_target(models[b]["xi"])):
+                if FF.find_equivalence(A, FF.prepare_target_model(models[b]["xi"])):
                     ra, rb = find(a), find(b)
                     parent[max(ra, rb)] = min(ra, rb)
 
@@ -115,8 +115,8 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
                 continue
             # always solved in the direction  k -> rep, then verified
             g = FF.find_equivalence(
-                FF.prep_source(models[k]["xi"], models[k]["basis"]),
-                FF.prep_target(models[rep]["xi"]))
+                FF.prepare_starting_model(models[k]["xi"], models[k]["basis"]),
+                FF.prepare_target_model(models[rep]["xi"]))
             assert g is not None
             tgt = np.concatenate([FF._half_targets(*g[0]),
                                   20 + FF._half_targets(*g[1])])
@@ -124,7 +124,7 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
             img[:, tgt] = models[k]["xi"]
             assert np.array_equal(np.sort(FF.encode(img)),
                                   np.sort(FF.encode(models[rep]["xi"])))
-            gmap[k] = f"left: {FF.fmt_g(g[0])}  |  right: {FF.fmt_g(g[1])}"
+            gmap[k] = f"left: {FF.relabelling_note(g[0])}  |  right: {FF.relabelling_note(g[1])}"
             notes[k] = (f"= {models[rep]['label']}.  "
                         f"E2/E3 permutation -- {perm_note(g)}.  "
                         f"E1 change of basis (E = 1+S+Sb) -- "
@@ -132,7 +132,7 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
 
     out = df.copy()
     out["PaperLabel"] = labels
-    out["TwistBasis"] = [" ; ".join(FF.describe(t) for t in m["twists"]) for m in models]
+    out["TwistBasis"] = [" ; ".join(FF.twist_label(t) for t in m["twists"]) for m in models]
     out["Unique"] = ["yes" if len(classes[find(k)]) == 1 else "no" for k in range(n)]
     out["IsRepresentative"] = ["yes" if find(k) == k else "no" for k in range(n)]
     out["ClassRepresentative"] = [rep_of[k] for k in range(n)]
@@ -174,8 +174,8 @@ def classify(name: str, params, build: Callable, names: List[str],
     assign = []
     for j, (p, b) in enumerate(mods):
         xi = FF.additive_set(b)
-        fp = FF.fingerprint(xi)
-        tgt = FF.prep_target(xi)
+        fp = FF.trace_signature(xi)
+        tgt = FF.prepare_target_model(xi)
         hit = None
         for r in reps:
             if r["fp"] == fp and FF.find_equivalence(r["src"], tgt):
@@ -184,7 +184,7 @@ def classify(name: str, params, build: Callable, names: List[str],
         if hit is None:
             hit = len(reps)
             reps.append(dict(id=hit, fp=fp, basis=b, params=p,
-                             src=FF.prep_source(xi, b), twists=list(b[3:])))
+                             src=FF.prepare_starting_model(xi, b), twists=list(b[3:])))
         assign.append(hit)
         if progress and (j + 1) % progress == 0:
             print(f"   {j+1}/{len(mods)} scanned, {len(reps)} classes "
@@ -217,7 +217,7 @@ def write_classes(result, out_path, param_cols):
     for r in result["reps"]:
         d = dict(param_cols(*r["params"]))
         d["Label"] = result["labels"][r["id"]]
-        d["TwistBasis"] = " ; ".join(FF.describe(t) for t in r["twists"])
+        d["TwistBasis"] = " ; ".join(FF.twist_label(t) for t in r["twists"])
         d["NumberOfMIParameterChoices"] = result["assign"].count(r["id"])
         rows.append(d)
     pd.DataFrame(rows).to_csv(out_path, index=False)
