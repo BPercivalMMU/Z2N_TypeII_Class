@@ -295,7 +295,7 @@ _WEIGHTS = np.random.default_rng(12345).integers(1, 2 ** 20, size=8192)
 
 
 def apply_g(v: np.ndarray, gL, gR) -> np.ndarray:
-    """Explicit action of g = (g_L, g_R) on a 40-vector."""
+    """Explicit action of g = (g_L, g_R) on a vector."""
     out = np.zeros(40, dtype=np.uint8)
     out[[0, 1, 20, 21]] = v[[0, 1, 20, 21]]
     for off, (pi, fl) in ((0, gL), (20, gR)):
@@ -319,8 +319,7 @@ def _right_invariant(xi: np.ndarray) -> np.ndarray:
 def prepare_starting_model(xi: np.ndarray, basis: Optional[np.ndarray] = None) -> Dict:
     """
     Get the initial model's additive set ready to be transformed and matched
-    against a target. Passing the basis caches its code tables too, which is
-    what makes repeated find_equivalence calls against the same model cheap.
+    against a target. 
     """
     left = xi[:, :20].astype(np.int64) @ WH.T          # left half of Xi under every g_L
     fingerprint_per_gL = np.sort(left * 256 + _right_invariant(xi)[:, None], axis=0)
@@ -476,7 +475,7 @@ def twist_label(vec: np.ndarray) -> str:
 
 
 def relabelling_note(g_half) -> str:
-    """Human-readable form of one chirality's relabelling: a permutation plus which directions swap y<->w."""
+    """Readable form of equivalence map."""
     perm, flips = g_half
     moves = ", ".join(f"{i+1}->{perm[i]+1}" for i in range(6) if perm[i] != i)
     swapped = "".join(str(i + 1) for i in range(6) if flips[i])
@@ -484,7 +483,7 @@ def relabelling_note(g_half) -> str:
 
 
 def describe_equivalence(src, dst, g, names) -> str:
-    """Human-readable note written into the output csv, explaining why src is equivalent to dst."""
+    """Readable note written into the output csv explaining equivalence"""
     return (f"duplicate of {dst['label']}. "
             f"E3/E2 permutations -- holomorphic: {relabelling_note(g[0])}; "
             f"anti-holomorphic: {relabelling_note(g[1])}. "
