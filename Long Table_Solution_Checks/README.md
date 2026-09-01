@@ -17,14 +17,13 @@ SO(12) lattice at the free fermionic point. `Z2L_2_Z2R`, `Z2L_2_Z2R_2`,
    equivalence relations E1-E3 of section 4.1 (GL(|B|;Z) basis changes,
    `y^i <-> w^i`, and holomorphic/anti-holomorphic index permutations) with
    an exhaustive `G_L x G_R` search — `find_equivalence()` in
-   `FF_equivalence_checker_master.py`, or the point-group-specific variant
-   copied into a subfolder when the search needs a specialised layout.
+   `FF_equivalence_checker_master.py`, shared by all four scripts.
 
 `Z2L_2_Z2R` and `Z2L_Z2` route through the shared `classification_tools_all.py`
 driver and `pointgroup_specs.py` (which defines each point group's
 parameters and basis-vector builder). `Z2L_2_Z2R_2` and `Z2L_Z2R_Z2` are
-larger scans structured as one-sided-data x one-sided-data and call their own
-local `FF_equivalence_checker_*.py` directly instead.
+larger scans structured as one-sided-data x one-sided-data, so they drive
+`FF_equivalence_checker_master.py` directly rather than through `classify()`.
 
 ## Shared modules (this folder)
 

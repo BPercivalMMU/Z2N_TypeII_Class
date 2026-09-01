@@ -17,12 +17,24 @@ Fermion layout of the 40-component boundary condition vectors:
 
 Point groups supported
 ----------------------
+This module is the single shared engine for every classify_*.py script in
+Long Table_Solution_Checks.  Z2L_Z2 and Z2L_2_Z2R go through it indirectly,
+via classification_tools_all.py + pointgroup_specs.py; Z2L_2_Z2R_2 and
+Z2L_Z2R_Z2 import it directly, since their parameter scans are structured
+differently (one-sided-data x one-sided-data) and so drive find_equivalence
+themselves rather than through classify().  The build_basis_* helpers below
+also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
+Z2L_Z2R) for reuse elsewhere -- those five are solved analytically in the
+paper and have no classify_*.py script of their own here.
+
   Z2L_Z2R_Z2   basis {1, S, Sbar, B1, B1b, B2b2}
                parameters n12, N ; k12, K ; m3456      (k = nbar, K = Nbar)
   Z2L_2_Z2R_2  basis {1, S, Sbar, B1, B2, B1b, B2b}
                parameters n12, N, m3456, M ; k12, K, l3456, L
                                                        (k = nbar, l = mbar,
                                                         K = Nbar, L = Mbar)
+  Z2L_Z2       basis {1, S, Sbar, B1, B2b2}            parameters n12, N, m3456
+  Z2L_2_Z2R    basis {1, S, Sbar, B1, B2, B1b}          parameters n12, N, m3456, M, k12, K
 
 Equivalence relations (section 4.1)
 -----------------------------------
@@ -54,6 +66,13 @@ POW40 = (1 << np.arange(40, dtype=np.int64))
 POW20 = (1 << np.arange(20, dtype=np.int64))
 
 BASIS_NAMES = {
+    "Z2":          ["1", "S", "Sb", "B11b"],
+    "Z2_2":        ["1", "S", "Sb", "B11b", "B22b"],
+    "Z2L":         ["1", "S", "Sb", "B1"],
+    "Z2L_2":       ["1", "S", "Sb", "B1", "B2"],
+    "Z2L_Z2R":     ["1", "S", "Sb", "B1", "B1b"],
+    "Z2L_Z2":      ["1", "S", "Sb", "B1", "B2b2"],
+    "Z2L_2_Z2R":   ["1", "S", "Sb", "B1", "B2", "B1b"],
     "Z2L_Z2R_Z2":  ["1", "S", "Sb", "B1", "B1b", "B2b2"],
     "Z2L_2_Z2R_2": ["1", "S", "Sb", "B1", "B2", "B1b", "B2b"],
 }

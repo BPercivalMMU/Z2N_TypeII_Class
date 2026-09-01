@@ -33,12 +33,15 @@ Outputs
 import argparse
 import itertools
 import os
+import sys
 import time
 
 import numpy as np
 import pandas as pd
 
-import FF_equivalence_checker_Z2L_Z2R_Z2 as FF
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import FF_equivalence_checker_master as FF
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "Outputs")
@@ -74,7 +77,7 @@ def main():
     for (n12, N) in lr:
         for (k12, K) in lr:
             for m in ms:
-                basis = FF.build_basis(n12, N, k12, K, m)
+                basis = FF.build_basis_Z2L_Z2R_Z2(n12, N, k12, K, m)
                 if FF.modular_invariant(basis):
                     models.append((n12, N, k12, K, m, basis))
     print(f"modular invariant configurations: {len(models)}  "
@@ -115,7 +118,7 @@ def main():
         for i in range(len(ref)):
             row = ref.iloc[i]
             gi = lambda c: int(str(row[c]).strip())
-            b = FF.build_basis([gi("n1"), gi("n2")], [gi(f"N{j}") for j in range(1, 7)],
+            b = FF.build_basis_Z2L_Z2R_Z2([gi("n1"), gi("n2")], [gi(f"N{j}") for j in range(1, 7)],
                                [gi("k1"), gi("k2")], [gi(f"K{j}") for j in range(1, 7)],
                                [gi(f"m{j}") for j in range(3, 7)])
             tgt = FF.prep_target(FF.additive_set(b))

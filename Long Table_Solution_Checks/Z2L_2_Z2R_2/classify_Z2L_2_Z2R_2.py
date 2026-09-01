@@ -40,12 +40,15 @@ import argparse
 import ast
 import itertools
 import os
+import sys
 import time
 
 import numpy as np
 import pandas as pd
 
-import FF_equivalence_checker_Z2L_2_Z2R_2 as FF
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import FF_equivalence_checker_master as FF
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "Outputs")
