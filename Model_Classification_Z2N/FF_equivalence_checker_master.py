@@ -1,14 +1,12 @@
 """
 FF_equivalence_checker_master.py
 
-Shared machinery for the classification of order-two T-folds on the SO(12)
-lattice at the free fermionic point.
+Classification of order-two T-folds on the SO(12) lattice at the free fermionic point.
 
-Point-group independent: every routine works on the 40-component boundary
-condition vectors and on however many basis rows it is given.  Only the
-build_basis_* helpers at the end know about a particular point group.
+Consider models with basis vectors of 40 boundary condition components.  
+The build_basis_* select the point group.
 
-Fermion layout of the 40-component boundary condition vectors:
+Fermion conventions of the 40 boundary condition components:
 
   index   0, 1      psi^mu                 |  20,21      psibar^mu
           2 - 7     chi^1..chi^6           |  22 - 27    chibar^1..chibar^6
@@ -17,16 +15,14 @@ Fermion layout of the 40-component boundary condition vectors:
 
 Point groups supported
 ----------------------
-This module is the single shared engine for every classify_*.py script in
-the Z2N model classification table.  Z2L_Z2 and Z2L_2_Z2R go through it
-indirectly, via classification_tools_all.py + pointgroup_specs.py;
-Z2L_2_Z2R_2 and Z2L_Z2R_Z2 import it directly, since their parameter scans
-are structured differently (one-sided-data x one-sided-data) and so drive
-find_equivalence themselves rather than through classify().  The build_basis_*
-helpers below also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
-Z2L_Z2R) for reuse elsewhere -- those five are solved analytically in the
-paper and have no classify_*.py script of their own here.
+This module used in every classify_*.py script the creates the 
+Z2^N model classification table.  The most complicated cases of Z2L_2_Z2R_2 and Z2L_Z2R_Z2 import it directly
 
+The build_basis_* helpers below also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
+Z2L_Z2R) for reuse elsewhere -- those five are solved analytically.
+
+Parameter conventions:
+----------------------------------
   Z2L_Z2R_Z2   basis {1, S, Sbar, B1, B1b, B2b2}
                parameters n12, N ; k12, K ; m3456      (k = nbar, K = Nbar)
   Z2L_2_Z2R_2  basis {1, S, Sbar, B1, B2, B1b, B2b}
@@ -39,21 +35,20 @@ paper and have no classify_*.py script of their own here.
 Equivalence relations (section 4.1)
 -----------------------------------
   E1  GL(|B|;Z) changes of basis   -> handled by comparing additive sets Xi
-  E2  y^i <-> w^i, per direction, either chirality independently
-  E3  permutation of the holomorphic, or of the anti-holomorphic, indices
+  E2  y^i <-> w^i, per direction, left and right independently
+  E3  permutation of the holomorphic or anti-holomorphic indices
 
-E2 and E3 generate G = G_L x G_R with |G_L| = |G_R| = 6! * 2^6 = 46080.
-find_equivalence() searches all 46080^2 elements without enumerating them:
-g_L is screened on the multiset of left halves of Xi, then g_R against the
-right halves that the surviving g_L allows.  Every hit is verified explicitly.
+E2 and E3 generate G = G_L x G_R with an S6 permutation of the six directions and then Z2^6 for the y<->w swaps, 
+this gives |G_L| = |G_R| = 6! * 2^6 = 46080.
+find_equivalence() essentially searches the 46080^2 possibilities
+with g_L initially checked and g_R checked once a g_L is found so more efficient.
 
-Modular invariance (3.4) is imposed on the vectors, using the Minkowskian
-product alpha.beta = 1/2 alpha_L.beta_L - 1/2 alpha_R.beta_R:
+Modular invariance of the basis vectors, beta, is imposed:
 
     beta_a . beta_a = 0 mod 4   <=>  tr_L - tr_R = 0 mod 8
     beta_a . beta_b = 0 mod 2   <=>  ov_L - ov_R = 0 mod 4
     beta_a n beta_b n beta_c n beta_d = 0 mod 1
-                                <=>  #{positions where all four are 1} is even
+                                
 """
 from __future__ import annotations
 
@@ -275,7 +270,7 @@ def modular_invariant(basis: np.ndarray) -> bool:
 
 
 # --------------------------------------------------------------------------
-# the relabelling group acting on one chirality
+# the g_L and g_R for E2 and E3 logic
 # --------------------------------------------------------------------------
 def _half_targets(pi, fl) -> np.ndarray:
     t = np.arange(20, dtype=np.int64)
@@ -314,10 +309,7 @@ def apply_g(v: np.ndarray, gL, gR) -> np.ndarray:
 
 def _right_invariant(xi: np.ndarray) -> np.ndarray:
     """
-    Data about the right half of each element of Xi that no g_R can change:
-    the number of periodic fermions and the number of periodic chibar's.
-    Attaching it to the left code makes the g_L screening far more selective,
-    which matters for configurations with a large symmetry group.
+    Looking for g_R once a g_L is found
     """
     trR = xi[:, 20:].astype(np.int64).sum(1)
     chiR = xi[:, 22:28].astype(np.int64).sum(1)
