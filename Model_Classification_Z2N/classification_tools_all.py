@@ -1,14 +1,14 @@
 """
 classification_tools.py
 
-Generic engine behind the per-point-group check / classify scripts.
+Generic engine behind the equivalence checks / classify scripts.
 
-  check_models()  -- test every pair of a given model list for equivalence
+  check_models()  : test every pair of a given model list for equivalence
                      under E1-E3 and write the input file back out with
                      Unique / ClassRepresentative / EquivalentTo /
                      RelabellingToRepresentative / EquivalenceNotes columns.
 
-  classify()      -- enumerate the full parameter range, keep the modular
+  classify()      : enumerate the full parameter range, keep the modular
                      invariant choices, and reduce them modulo E1-E3.
 
 Both use FF_equivalence_checker_master.find_equivalence, which searches all of G_L x G_R
@@ -156,7 +156,7 @@ def classify(name: str, params, build: Callable, names: List[str],
              out_dir: str, table: Optional[Dict] = None,
              progress: int = 2000) -> List[Dict]:
     """
-    params  : iterable of parameter tuples covering the FULL range
+    params  : iterable of parameter tuples 
     build   : parameters -> 40-column basis matrix
     """
     os.makedirs(out_dir, exist_ok=True)
