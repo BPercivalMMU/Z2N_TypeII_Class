@@ -1,4 +1,4 @@
-# Long Table Solution Checks
+# Z2N Model Classification Table
 
 Classification, from scratch, of the order-two T-fold point groups on the
 SO(12) lattice at the free fermionic point. `Z2L_2_Z2R`, `Z2L_2_Z2R_2`,

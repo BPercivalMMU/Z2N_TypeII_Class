@@ -18,12 +18,12 @@ Fermion layout of the 40-component boundary condition vectors:
 Point groups supported
 ----------------------
 This module is the single shared engine for every classify_*.py script in
-Long Table_Solution_Checks.  Z2L_Z2 and Z2L_2_Z2R go through it indirectly,
-via classification_tools_all.py + pointgroup_specs.py; Z2L_2_Z2R_2 and
-Z2L_Z2R_Z2 import it directly, since their parameter scans are structured
-differently (one-sided-data x one-sided-data) and so drive find_equivalence
-themselves rather than through classify().  The build_basis_* helpers below
-also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
+the Z2N model classification table.  Z2L_Z2 and Z2L_2_Z2R go through it
+indirectly, via classification_tools_all.py + pointgroup_specs.py;
+Z2L_2_Z2R_2 and Z2L_Z2R_Z2 import it directly, since their parameter scans
+are structured differently (one-sided-data x one-sided-data) and so drive
+find_equivalence themselves rather than through classify().  The build_basis_*
+helpers below also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
 Z2L_Z2R) for reuse elsewhere -- those five are solved analytically in the
 paper and have no classify_*.py script of their own here.
 
