@@ -31,13 +31,12 @@ No standard-form restrictions (A1-A4 of section 4.3), no |N| <= 3 cut and no
 gauge fixing of n2 or m4 are imposed; the redundancy is removed by the
 equivalence search itself.
 
-    python classify_Z2L_2_Z2R_2.py [--reference FILE] [--limit-left N]
+    python classify_Z2L_2_Z2R_2.py [--limit-left N]
 
 --limit-left restricts step 1 to the first N left-hand data, for a quick smoke
 test; omit it for the full run.
 """
 import argparse
-import ast
 import itertools
 import os
 import sys
@@ -107,7 +106,6 @@ def cross_filter(a, n_right, MB1, MB2, MB12):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", default=OUT_DIR)
-    ap.add_argument("--reference", default=None)
     ap.add_argument("--limit-left", type=int, default=0)
     ap.add_argument("--no-all-mi", action="store_true")
     args = ap.parse_args()
@@ -154,29 +152,6 @@ def main():
     print(f"inequivalent configurations: {len(reps)}   ({time.time()-t0:.0f} s)")
 
     names = {r["id"]: f"class_{r['id']+1:02d}" for r in reps}
-    if args.reference:
-        ref = pd.read_csv(args.reference, dtype=str, encoding="utf-8-sig")
-        ref.columns = [c.strip() for c in ref.columns]
-        tup = lambda x: tuple(int(v) for v in ast.literal_eval(str(x).strip()))
-        found = {}
-        for i in range(len(ref)):
-            row = ref.iloc[i]
-            b = FF.build_basis_Z2L_2_Z2R_2(tup(row["n"]), tup(row["N"]),
-                                           tup(row["m"]), tup(row["M"]),
-                                           tup(row["k"]), tup(row["K"]),
-                                           tup(row["l"]), tup(row["L"]))
-            tgt = FF.prepare_target_model(FF.additive_set(b))
-            lab = str(row.get("PaperLabel", f"row{i+1}")).replace("\u2013", "-")
-            for r in reps:
-                if FF.find_equivalence(r["src"], tgt, r["basis"]):
-                    found.setdefault(r["id"], []).append(lab)
-                    break
-        for k, v in found.items():
-            names[k] = v[0]
-        print(f"reference list covers {len(found)} of {len(reps)} classes")
-        miss = [names[r["id"]] for r in reps if r["id"] not in found]
-        if miss:
-            print("classes NOT present in the reference list: " + ", ".join(miss))
 
     def prow(p):
         n, N, m, M, k, K, l, L = p

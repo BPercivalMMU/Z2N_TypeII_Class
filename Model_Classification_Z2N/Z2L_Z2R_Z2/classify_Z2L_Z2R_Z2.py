@@ -60,9 +60,6 @@ def parameter_scan():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", default=OUT_DIR)
-    ap.add_argument("--reference", default=None,
-                    help="optional csv of known models with a PaperLabel column, "
-                         "used to name the classes")
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -109,31 +106,7 @@ def main():
                   f"({time.time()-t0:.0f} s)")
     print(f"\ninequivalent configurations: {len(reps)}  ({time.time()-t0:.0f} s)")
 
-    # ---- optional: name the classes from a reference list ----------------
     names = {r["id"]: f"class_{r['id']+1:02d}" for r in reps}
-    if args.reference:
-        ref = pd.read_csv(args.reference, dtype=str, encoding="utf-8-sig")
-        ref.columns = [c.strip() for c in ref.columns]
-        found = {}
-        for i in range(len(ref)):
-            row = ref.iloc[i]
-            gi = lambda c: int(str(row[c]).strip())
-            b = FF.build_basis_Z2L_Z2R_Z2([gi("n1"), gi("n2")], [gi(f"N{j}") for j in range(1, 7)],
-                               [gi("k1"), gi("k2")], [gi(f"K{j}") for j in range(1, 7)],
-                               [gi(f"m{j}") for j in range(3, 7)])
-            tgt = FF.prepare_target_model(FF.additive_set(b))
-            lab = str(row.get("PaperLabel", f"row{i+1}")).replace("\u2013", "-")
-            for r in reps:
-                if FF.find_equivalence(r["src"], tgt, r["basis"]):
-                    found.setdefault(r["id"], []).append(lab)
-                    break
-        for k, v in found.items():
-            names[k] = v[0]
-        print(f"reference list covers {len(found)} of {len(reps)} classes")
-        missing = [r["id"] for r in reps if r["id"] not in found]
-        if missing:
-            print("classes NOT represented in the reference list: "
-                  + ", ".join(names[k] for k in missing))
 
     # ---- write ----------------------------------------------------------
     def prow(p):

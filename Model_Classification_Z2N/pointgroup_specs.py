@@ -162,4 +162,94 @@ class Z2L_2_Z2R:
     }
 
 
-SPECS = {"Z2L_Z2": Z2L_Z2, "Z2L_2_Z2R": Z2L_2_Z2R}
+# ==========================================================================
+#  Z2L^2         basis {1, S, Sbar, B1, B2}
+# ==========================================================================
+class Z2L_2:
+    name = "Z2L^2"
+    basis_names = ["1", "S", "Sb", "B1", "B2"]
+
+    @staticmethod
+    def build(n12, N, m3456, M):
+        return np.vstack([ONE, S, SB,
+                          FF.make_B1(n12[0], n12[1], N),
+                          FF.make_B2(m3456, M)]).astype(np.uint8) % 2
+
+    @staticmethod
+    def params():
+        """Full range.  Only B1^2 = 0 mod 4 is used to keep the loop small."""
+        for n in BITS2:
+            for N in BITS6:
+                if (sum(n) - sum(N)) % 4:
+                    continue
+                for m in BITS4:
+                    for M in BITS6:
+                        yield (n, N, m, M)
+
+    @staticmethod
+    def param_cols(n12, N, m3456, M):
+        return {"n": str(tuple(n12)), "N": str(tuple(N)),
+                "m": str(tuple(m3456)), "M": str(tuple(M))}
+
+    table = {
+     "I": ("b1", "b2"),
+     "II": ("b1", "b2 + e35`1"),
+     "III": ("b1", "b2 + e3456`1`2"),
+     "IV": ("b1 + e1`1", "b2 + e356`2"),
+     "V": ("b1 + e12`1`2", "b2 + e3456`1`3"),
+     "VI": ("b1 + e12`1`2", "b2 + e34`3`4"),
+    }
+
+
+# ==========================================================================
+#  Z2L x Z2R     basis {1, S, Sbar, B1, B1bar}
+# ==========================================================================
+class Z2L_Z2R:
+    name = "Z2L x Z2R"
+    basis_names = ["1", "S", "Sb", "B1", "B1b"]
+
+    @staticmethod
+    def build(n12, N, k12, K):
+        return np.vstack([ONE, S, SB,
+                          FF.make_B1(n12[0], n12[1], N),
+                          FF.make_Bb1(k12[0], k12[1], K)]).astype(np.uint8) % 2
+
+    @staticmethod
+    def params():
+        """
+        Full range, organised as (one-sided data) x (one-sided data): each
+        side's own self modular-invariance condition is applied first, before
+        the cross conditions between B1 and B1bar are tested.
+        """
+        side = [(n, N) for n in BITS2 for N in BITS6 if (sum(n) - sum(N)) % 4 == 0]
+        for (n12, N) in side:
+            for (k12, K) in side:
+                yield (n12, N, k12, K)
+
+    @staticmethod
+    def param_cols(n12, N, k12, K):
+        return {"n": str(tuple(n12)), "N": str(tuple(N)),
+                "k": str(tuple(k12)), "K": str(tuple(K))}
+
+    table = {
+     "i-i": ("b1", "b`1"),
+     "ii-i": ("b1 + e1`1", "b`1"),
+     "i-ii": ("b1", "b`1 + e1`1"),
+     "iii-i": ("b1 + e12`1`2", "b`1"),
+     "i-iii": ("b1", "b`1 + e12`1`2"),
+     "ii-ii.1": ("b1 + e1`1", "b`1 + e1`1"),
+     "ii-ii.2": ("b1 + e1`2", "b`1 + e2`1"),
+     "ii-ii.3": ("b1 + e1`3", "b`1 + e3`1"),
+     "iii-ii.1": ("b1 + e12`1`2", "b`1 + e1`1"),
+     "ii-iii.1": ("b1 + e1`1", "b`1 + e12`1`2"),
+     "iii-ii.2": ("b1 + e12`2`3", "b`1 + e3`1"),
+     "ii-iii.2": ("b1 + e1`3", "b`1 + e23`1`2"),
+     "iii-ii.3": ("b1 + e12`3`4", "b`1 + e1`1"),
+     "ii-iii.3": ("b1 + e1`1", "b`1 + e34`1`2"),
+     "iii-iii.1": ("b1 + e12`1`2", "b`1 + e12`1`2"),
+     "iii-iii.2": ("b1 + e12`1`3", "b`1 + e13`1`2"),
+     "iii-iii.3": ("b1 + e12`3`4", "b`1 + e34`1`2"),
+    }
+
+
+SPECS = {"Z2L_Z2": Z2L_Z2, "Z2L_2_Z2R": Z2L_2_Z2R, "Z2L_2": Z2L_2, "Z2L_Z2R": Z2L_Z2R}
