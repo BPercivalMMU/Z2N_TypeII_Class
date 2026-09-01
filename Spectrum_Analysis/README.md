@@ -25,17 +25,17 @@ physics.
 ### `get_model_spectra_stats_all_classes.py` — driver over all models/classes
 
 Reads every row of the 9 canonical input CSVs in
-`All_Z2N_Input_Models_updated_310526/` (one file per point-group class:
+`All_Z2N_Input_Models_updated_310826/` (one file per point-group class:
 `Z2`, `Z2_2`, `Z2L`, `Z2L_2`, `Z2L_Z2R`, `Z2L_2_Z2R`, `Z2L_2_Z2R_2`,
-`Z2L_Z2`, `Z2L_Z2R_Z2`). For each row it builds the corresponding basis
-vector matrix, scans over the IIA/IIB choice and that class's structural
-and SUSY-breaking GGSO phase variants, and calls into
-`TypeIIFreeFermioniser_v5.py` to compute the processed spectrum for each
-combination.
+`Z2L_Z2`, `Z2L_Z2R_Z2`), each already carrying a `PaperLabel` column. For
+each row it builds the corresponding basis vector matrix, scans over the
+IIA/IIB choice and that class's structural and SUSY-breaking GGSO phase
+variants, and calls into `TypeIIFreeFermioniser_v5.py` to compute the
+processed spectrum for each combination.
 
 A few key details:
 - **Basis construction** — each point group's basis vectors are built
-  from a row's raw shift parameters (e.g. `n1,n2,N1..N6` for $B_1$) by
+  from a row's tuple-valued shift parameters (e.g. `n`, `N` for $B_1$) by
   the `build_basis_*` functions, one per class.
 - **GGSO scanning** — every class always scans both IIA and IIB; classes
   with more than one independent twist also scan the structural GGSO
@@ -57,10 +57,9 @@ particular GGSO overrides), writing to `inputs_nonSUSY_enhanced/` and
 
 ## Input model labelling
 
-Every row in `All_Z2N_Input_Models_updated_310526/` carries a
+Every row in `All_Z2N_Input_Models_updated_310826/` carries a
 `PaperLabel` column giving that model's twist-vector classification in
 the paper's convention: `I`–`VI` (combined $b_1,b_2$), `i`–`iii`
 (single $b_1$/$b_{\bar1}$), `a`–`b` (symmetric $b_{1\bar1}$), and
 `A`–`E` (symmetric $b_{2\bar2}$), composed with `-` for classes built
-from more than one twist (e.g. `IV-ii.2`, `iii-iii-E.4`). See
-`label_paper_classification.py` for the derivation and labelling rules.
+from more than one twist (e.g. `IV-ii.2`, `iii-iii-E.4`).

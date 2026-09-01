@@ -84,18 +84,21 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TYPEIIFF_PATH = os.path.join(HERE, "TypeIIFreeFermioniser_v5.py")
 MULT_CSV_PATH = os.path.join(HERE, "Input_typeII", "supermultiplets.csv")
 
-_INPUT_DIR = os.path.join(HERE, "All_Z2N_Input_Models_updated_310526")
+_INPUT_DIR = os.path.join(HERE, "All_Z2N_Input_Models_updated_310826")
 
+# Point groups in the order they appear in table 15 of the paper.  Each file
+# lists the inequivalent configurations of that point group, also in table 15
+# order, with a PaperLabel column carrying the table 15 label.
 INPUT_FILES: Dict[str, str] = {
-    #"Z2":          os.path.join(_INPUT_DIR, "Z2_solutions.csv"),
-    #"Z2_2":        os.path.join(_INPUT_DIR, "Z2_2_solutions.csv"),
-    #"Z2L":         os.path.join(_INPUT_DIR, "Z2L_solutions.csv"),
-    #"Z2L_2":       os.path.join(_INPUT_DIR, "Z2L_2_stefan_solutions.csv"),
-    #"Z2L_Z2R":     os.path.join(_INPUT_DIR, "Z2L_Z2R_stefan_solutions.csv"),
-    #"Z2L_Z2":      os.path.join(_INPUT_DIR, "Z2L_Z2_stefan_solutions.csv"),
-    #"Z2L_2_Z2R":   os.path.join(_INPUT_DIR, "Z2L_2_Z2R_v2_reformatted.csv"),
-    "Z2L_2_Z2R_2": os.path.join(_INPUT_DIR, "Z2L_2_Z2R_2_v2_reformatted.csv"),
-    #"Z2L_Z2R_Z2":  os.path.join(_INPUT_DIR, "Z2L_Z2R_Z2_v2_reformatted.csv"),
+    "Z2":          os.path.join(_INPUT_DIR, "Z2_models.csv"),
+    "Z2_2":        os.path.join(_INPUT_DIR, "Z2_2_models.csv"),
+    "Z2L":         os.path.join(_INPUT_DIR, "Z2L_models.csv"),
+    "Z2L_Z2R":     os.path.join(_INPUT_DIR, "Z2L_Z2R_models.csv"),
+    "Z2L_2":       os.path.join(_INPUT_DIR, "Z2L_2_models.csv"),
+    "Z2L_Z2":      os.path.join(_INPUT_DIR, "Z2L_Z2_models.csv"),
+    "Z2L_2_Z2R":   os.path.join(_INPUT_DIR, "Z2L_2_Z2R_models.csv"),
+    "Z2L_Z2R_Z2":  os.path.join(_INPUT_DIR, "Z2L_Z2R_Z2_models.csv"),
+    "Z2L_2_Z2R_2": os.path.join(_INPUT_DIR, "Z2L_2_Z2R_2_models.csv"),
 }
 
 OUT_DIR              = os.path.join(HERE, "Spectra_Stats_ByClass_SUSYBROKEN")
@@ -308,100 +311,87 @@ def make_B1b1(n1: int, n2: int) -> np.ndarray:
 
 # ── Basis builders per class ──────────────────────────────────────────────────
 
+# All nine input files use the same tuple-valued columns; a point group only
+# carries the ones its twist vectors need:
+#
+#   n = n12        N        (B1)          m = m3456   M        (B2)
+#   k = nbar12     K = Nbar (B1bar)       l = mbar3456 L = Mbar (B2bar)
+#   n              (B_{1 1bar}, symmetric)
+#   m = m3456      (B_{2 2bar}, symmetric, mbar = m)
+#
+# _parse_tuple_cell accepts "(1, 0)", "1 0", "[1,0]" etc.
+
+def _p(row: pd.Series, key: str, n_expected: int) -> List[int]:
+    t = _parse_tuple_cell(row.get(key))
+    if len(t) != n_expected:
+        raise ValueError(f"column {key!r}: expected {n_expected} entries, got {t}")
+    return list(t)
+
+
 def build_basis_Z2(row: pd.Series) -> np.ndarray:
-    m1 = _as_int(row.get("m1")); m2 = _as_int(row.get("m2"))
-    return np.vstack([make_one(), make_S(), make_Sbar(), make_B1b1(m1, m2)]).astype(int)
+    n = _p(row, "n", 2)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1b1(n[0], n[1])]).astype(int)
 
 
 def build_basis_Z2_2(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    m3 = _as_int(row.get("m3")); m4 = _as_int(row.get("m4"))
-    m5 = _as_int(row.get("m5")); m6 = _as_int(row.get("m6"))
-    return np.vstack([
-        make_one(), make_S(), make_Sbar(),
-        make_B1b1(n1, n2),
-        make_B2b2([m3, m4, m5, m6]),
-    ]).astype(int)
+    n = _p(row, "n", 2); m = _p(row, "m", 4)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1b1(n[0], n[1]), make_B2b2(m)]).astype(int)
 
 
 def build_basis_Z2L(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    N = [_as_int(row.get(f"N{i}")) for i in range(1, 7)]
-    return np.vstack([make_one(), make_S(), make_Sbar(), make_B1(n1, n2, N)]).astype(int)
-
-
-def build_basis_Z2L_2(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    N = [_as_int(row.get(f"N{i}")) for i in range(1, 7)]
-    m = [_as_int(row.get(f"m{i}")) for i in range(3, 7)]
-    M = [_as_int(row.get(f"M{i}")) for i in range(1, 7)]
-    return np.vstack([make_one(), make_S(), make_Sbar(), make_B1(n1, n2, N), make_B2(m, M)]).astype(int)
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N)]).astype(int)
 
 
 def build_basis_Z2L_Z2R(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    N = [_as_int(row.get(f"N{i}")) for i in range(1, 7)]
-    k1 = _as_int(row.get("k1")); k2 = _as_int(row.get("k2"))
-    K = [_as_int(row.get(f"K{i}")) for i in range(1, 7)]
-    return np.vstack([make_one(), make_S(), make_Sbar(), make_B1(n1, n2, N), make_Bb1(k1, k2, K)]).astype(int)
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    k = _p(row, "k", 2); K = _p(row, "K", 6)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_Bb1(k[0], k[1], K)]).astype(int)
 
 
-def build_basis_Z2L_2_Z2R(row: pd.Series) -> np.ndarray:
-    n12 = _parse_tuple_cell(row.get("n12"))
-    m   = _parse_tuple_cell(row.get("m3456"))
-    k12 = _parse_tuple_cell(row.get("k12"))
-    N   = _parse_tuple_cell(row.get("N"))
-    M   = _parse_tuple_cell(row.get("M"))
-    K   = _parse_tuple_cell(row.get("K"))
-    if len(n12) != 2 or len(k12) != 2 or len(m) != 4 or len(N) != 6 or len(M) != 6 or len(K) != 6:
-        raise ValueError("Bad tuple lengths in Z2L_2_Z2R row")
-    return np.vstack([
-        make_one(), make_S(), make_Sbar(),
-        make_B1(n12[0], n12[1], list(N)),
-        make_B2(list(m), list(M)),
-        make_Bb1(k12[0], k12[1], list(K)),
-    ]).astype(int)
-
-
-def build_basis_Z2L_2_Z2R_2(row: pd.Series) -> np.ndarray:
-    n12 = _parse_tuple_cell(row.get("n"))
-    m   = _parse_tuple_cell(row.get("m"))
-    k12 = _parse_tuple_cell(row.get("k"))
-    l   = _parse_tuple_cell(row.get("l"))
-    N   = _parse_tuple_cell(row.get("N"))
-    M   = _parse_tuple_cell(row.get("M"))
-    K   = _parse_tuple_cell(row.get("K"))
-    L6  = _parse_tuple_cell(row.get("L"))
-    if len(n12) != 2 or len(k12) != 2 or len(m) != 4 or len(l) != 4:
-        raise ValueError("Bad tuple lengths in Z2L_2_Z2R_2 row (n/m/k/l)")
-    if len(N) != 6 or len(M) != 6 or len(K) != 6 or len(L6) != 6:
-        raise ValueError("Bad tuple lengths in Z2L_2_Z2R_2 row (N/M/K/L)")
-    return np.vstack([
-        make_one(), make_S(), make_Sbar(),
-        make_B1(n12[0], n12[1], list(N)),
-        make_B2(list(m), list(M)),
-        make_Bb1(k12[0], k12[1], list(K)),
-        make_Bb2(list(l), list(L6)),
-    ]).astype(int)
+def build_basis_Z2L_2(row: pd.Series) -> np.ndarray:
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    m = _p(row, "m", 4); M = _p(row, "M", 6)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_B2(m, M)]).astype(int)
 
 
 def build_basis_Z2L_Z2(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    N = [_as_int(row.get(f"N{i}")) for i in range(1, 7)]
-    m = [_as_int(row.get(f"m{i}")) for i in range(3, 7)]
-    return np.vstack([make_one(), make_S(), make_Sbar(), make_B1(n1, n2, N), make_B2b2(m, m)]).astype(int)
+    n = _p(row, "n", 2); N = _p(row, "N", 6); m = _p(row, "m", 4)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_B2b2(m, m)]).astype(int)
+
+
+def build_basis_Z2L_2_Z2R(row: pd.Series) -> np.ndarray:
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    m = _p(row, "m", 4); M = _p(row, "M", 6)
+    k = _p(row, "k", 2); K = _p(row, "K", 6)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_B2(m, M),
+                      make_Bb1(k[0], k[1], K)]).astype(int)
 
 
 def build_basis_Z2L_Z2R_Z2(row: pd.Series) -> np.ndarray:
-    n1 = _as_int(row.get("n1")); n2 = _as_int(row.get("n2"))
-    N  = [_as_int(row.get(f"N{i}")) for i in range(1, 7)]
-    k1 = _as_int(row.get("k1")); k2 = _as_int(row.get("k2"))
-    K  = [_as_int(row.get(f"K{i}")) for i in range(1, 7)]
-    m  = [_as_int(row.get(f"m{i}")) for i in range(3, 7)]
-    return np.vstack([
-        make_one(), make_S(), make_Sbar(),
-        make_B1(n1, n2, N), make_Bb1(k1, k2, K), make_B2b2(m, m),
-    ]).astype(int)
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    k = _p(row, "k", 2); K = _p(row, "K", 6)
+    m = _p(row, "m", 4)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_Bb1(k[0], k[1], K),
+                      make_B2b2(m, m)]).astype(int)
+
+
+def build_basis_Z2L_2_Z2R_2(row: pd.Series) -> np.ndarray:
+    n = _p(row, "n", 2); N = _p(row, "N", 6)
+    m = _p(row, "m", 4); M = _p(row, "M", 6)
+    k = _p(row, "k", 2); K = _p(row, "K", 6)
+    l = _p(row, "l", 4); L6 = _p(row, "L", 6)
+    return np.vstack([make_one(), make_S(), make_Sbar(),
+                      make_B1(n[0], n[1], N), make_B2(m, M),
+                      make_Bb1(k[0], k[1], K), make_Bb2(l, L6)]).astype(int)
 
 
 BASIS_BUILDERS: Dict[str, Any] = {
