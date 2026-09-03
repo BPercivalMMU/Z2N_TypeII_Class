@@ -2,7 +2,7 @@
 """
 get_model_spectra_stats_all_classes.py
 
-Unified parallel driver for all nine point-group classes:
+Computes spectra for every model in all nine point-group classes:
   Z2, Z2_2, Z2L,
   Z2L_2, Z2L_Z2R, Z2L_2_Z2R, Z2L_2_Z2R_2, Z2L_Z2, Z2L_Z2R_Z2
 
@@ -10,10 +10,10 @@ Uses TypeIIFreeFermioniser_v5.py.
 
 Basis structures
 ----------------
-  Z2          : ['1', S, Sbar, B_{1b1}]                   symmetric Z2 (chi3..6 base)
+  Z2          : ['1', S, Sbar, B_{1b1}]                   symmetric Z2
   Z2_2        : ['1', S, Sbar, B_{1b1}, B_{2b2}]          two symmetric Z2 twists
-                  B_{1b1} = make_B1b1(n1,n2)  chi3..6 base
-                  B_{2b2} = make_B2b2([m3,m4,m5,m6])  chi1,2,5,6 base
+                  B_{1b1} = make_B1b1(n1,n2)
+                  B_{2b2} = make_B2b2([m3,m4,m5,m6])
   Z2L         : ['1', S, Sbar, B1]                        left-only Z2L
   Z2L_2       : ['1', S, Sbar, B1, B2]
   Z2L_Z2R     : ['1', S, Sbar, B1, B_b1]
@@ -37,9 +37,9 @@ Phase scanning
     Z2L_2_Z2R   : C_B1_Bb1, C_B2_Bb1                       -> 4 combos
     Z2L_Z2R_Z2  : C_B1_Bb1, C_B1_B2b2, C_Bb1_B2b2         -> 8 combos
     Z2L_2_Z2R_2 : C_B1_Bb1, C_B1_Bb2, C_B2_Bb1, C_B2_Bb2 -> 16 combos
-    others      : none (single structural run)
+    all other classes : no structural phases to scan, so each model only runs once
 
-  SUSY-breaking phases (auto-detected per class):
+  SUSY-breaking phases (worked out from each class's basis vectors):
     Z2, Z2_2    : none (all twists symmetric)
     Z2L         : C(Sbar,B1)                      -> +1 breaking variant
     Z2L_2       : C(Sbar,B1), C(Sbar,B2)          -> 3 breaking variants
@@ -60,9 +60,10 @@ Outputs
   Processed_Spectra_SUSY/{source}/{IIA,IIB}/{run_label}_processed.csv
   Processed_Spectra_non_SUSY/{source}/{IIA,IIB}/{run_label}_processed.csv
 
-  Per-point-group/-type-II subfolders ({source}/{IIA,IIB}) are created lazily,
-  so only point groups currently enabled in INPUT_FILES get folders. The
-  IIA/IIB choice is also recorded as a TYPE_II column in the stats CSVs.
+  {source} is the point group name, e.g. Z2L_2_Z2R. Its {source}/{IIA,IIB}
+  folder only appears once a job for that point group has actually run, so
+  only the point groups listed in INPUT_FILES get folders. The IIA/IIB
+  choice is also recorded as a TYPE_II column in the stats CSVs.
 """
 
 import ast
