@@ -12,16 +12,15 @@ Classification of the Z2L^2 x Z2R^2 T-folds on the SO(12) lattice from scratch.
          B2bar = [b2bar + l.ebar + L.e]     l = mbar3456 , L = Mbar
 
      and keep those for which {1, S, Sbar, B1, B2, B1bar, B2bar} satisfies the
-     modular invariance conditions (3.4).  As in the Z2L x Z2R x Z2 script the
+     modular invariance conditions (3.4). As in the Z2L x Z2R x Z2 script the
      conditions are imposed on the vectors themselves, including the two-loop
-     (four-fold overlap) condition, so no hand-derived parameter relation
-     enters.
+     (four-fold overlap) condition.
 
      The scan is organised as (one-sided data) x (one-sided data):
        * conditions involving only {1,S,Sbar,B1,B2} are applied first, leaving
          the admissible (n12, N, m3456, M);  likewise on the barred side;
-       * the 34 conditions mixing the two sides -- four inner products
-         B_i.B_jbar and thirty four-fold overlaps -- are bilinear in the two
+       * the 34 conditions mixing the two sides (four inner products
+         B_i.B_jbar and thirty four-fold overlaps) are bilinear in the two
          halves, so for each left-hand datum they are applied to all right-hand
          data at once with numpy, filtering progressively.
 

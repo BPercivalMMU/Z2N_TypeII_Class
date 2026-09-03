@@ -57,6 +57,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+# POW40[i] = 2^i, POW20[i] = 2^i.  A 0/1 vector @ POW20 packs it into one
+# integer: sum of 2^i over every position i that is 1.  This is used a lot
+# below (with the @ dot-product operator) as a fast way to compare whole
+# vectors as single numbers instead of comparing arrays element by element.
 POW40 = (1 << np.arange(40, dtype=np.int64))
 POW20 = (1 << np.arange(20, dtype=np.int64))
 
@@ -282,16 +286,27 @@ def _half_targets(pi, fl) -> np.ndarray:
 
 
 def _build_half_group():
-    params, W = [], []
+    relabellings, weight_rows = [], []
     for pi in itertools.permutations(range(6)):
         for fl in itertools.product((0, 1), repeat=6):
-            params.append((pi, fl))
-            W.append(POW20[_half_targets(pi, fl)])
-    return np.array(W, dtype=np.int64), params
+            relabellings.append((pi, fl))
+            weight_rows.append(POW20[_half_targets(pi, fl)])
+    return np.array(weight_rows, dtype=np.int64), relabellings
 
 
-WH, PARAMS = _build_half_group()                     # 46080 x 20
-_WEIGHTS = np.random.default_rng(12345).integers(1, 2 ** 20, size=8192)
+# All 46080 possible relabellings of one chirality (6! permutations x 2^6
+# y<->w swaps).  RELABELLINGS[g] is the (pi, fl) pair for relabelling g.
+# HALF_ENCODE_WEIGHTS[g] is a row of 20 powers-of-two, one per original
+# position, built so that `half_vector @ HALF_ENCODE_WEIGHTS[g]` packs the
+# RELABELLED vector straight into a single integer -- without ever having
+# to actually move the vector's entries around first.
+HALF_ENCODE_WEIGHTS, RELABELLINGS = _build_half_group()   # 46080 relabellings x 20 positions
+
+# Random numbers used to boil a whole sorted list of codes down to one
+# number (see "quick_check" below): if two lists are equal, their weighted
+# sums with the SAME random weights are equal too, so this gives a fast way
+# to rule out most non-matches before doing the slower exact comparison.
+_RANDOM_WEIGHTS = np.random.default_rng(12345).integers(1, 2 ** 20, size=8192)
 
 
 def apply_g(v: np.ndarray, gL, gR) -> np.ndarray:
@@ -319,17 +334,22 @@ def _right_invariant(xi: np.ndarray) -> np.ndarray:
 def prepare_starting_model(xi: np.ndarray, basis: Optional[np.ndarray] = None) -> Dict:
     """
     Get the initial model's additive set ready to be transformed and matched
-    against a target. 
+    against a target.
     """
-    left = xi[:, :20].astype(np.int64) @ WH.T          # left half of Xi under every g_L
-    fingerprint_per_gL = np.sort(left * 256 + _right_invariant(xi)[:, None], axis=0)
-    weights = _WEIGHTS[:xi.shape[0]]
-    model = dict(xi=xi, fingerprint_per_gL=fingerprint_per_gL,
-                hash_per_gL=(fingerprint_per_gL * weights[:, None]).sum(0))
+    # For every vector in Xi and every one of the 46080 possible g_L, pack
+    # (left half after applying g_L, right-half tag that no g_R can change)
+    # into one number, then sort each g_L's column -- this describes what
+    # Xi would look like under that g_L, as an order-independent list.
+    left_under_every_gL = xi[:, :20].astype(np.int64) @ HALF_ENCODE_WEIGHTS.T
+    sorted_codes_per_gL = np.sort(left_under_every_gL * 256 + _right_invariant(xi)[:, None], axis=0)
+    weights = _RANDOM_WEIGHTS[:xi.shape[0]]
+    model = dict(xi=xi, sorted_codes_per_gL=sorted_codes_per_gL,
+                # one number per g_L, standing in for its whole sorted list (see _RANDOM_WEIGHTS)
+                quick_check_per_gL=(sorted_codes_per_gL * weights[:, None]).sum(0))
     if basis is not None:
         model["basis"] = basis
         model["basis_left"] = basis[:, :20].astype(np.int64)
-        model["basis_right_per_gR"] = basis[:, 20:].astype(np.int64) @ WH.T
+        model["basis_right_per_gR"] = basis[:, 20:].astype(np.int64) @ HALF_ENCODE_WEIGHTS.T
     return model
 
 
@@ -342,10 +362,12 @@ def prepare_target_model(xi: np.ndarray) -> Dict:
         right_halves_seen.setdefault(l, []).append(r)
     right_halves_allowed = {l: np.array(sorted(set(rs)), dtype=np.int64)
                             for l, rs in right_halves_seen.items()}
-    fingerprint = np.sort(left * 256 + _right_invariant(xi))
-    weights = _WEIGHTS[:xi.shape[0]]
-    return dict(xi=xi, fingerprint=fingerprint, right_halves_allowed=right_halves_allowed,
-                hash=int((fingerprint * weights).sum()), codes=np.sort(encode(xi)))
+    # same packed-and-sorted list as prepare_starting_model, but the target
+    # is fixed (no g_L to try), so there is only one list to build here
+    sorted_codes = np.sort(left * 256 + _right_invariant(xi))
+    weights = _RANDOM_WEIGHTS[:xi.shape[0]]
+    return dict(xi=xi, sorted_codes=sorted_codes, right_halves_allowed=right_halves_allowed,
+                quick_check=int((sorted_codes * weights).sum()), codes=np.sort(encode(xi)))
 
 
 def find_equivalence(source_model: Dict, target_model: Dict, basis: Optional[np.ndarray] = None,
@@ -355,20 +377,25 @@ def find_equivalence(source_model: Dict, target_model: Dict, basis: Optional[np.
     source_model from prepare_starting_model, target_model from
     prepare_target_model.  Returns g = (g_L, g_R) as ((piL,flL),(piR,flR)), or None.
     """
-    gL_candidates = np.flatnonzero(source_model["hash_per_gL"] == target_model["hash"])
+    # screen candidate g_L: quick numeric check first, then confirm with a real
+    # comparison (the quick check could theoretically collide by chance)
+    gL_candidates = np.flatnonzero(source_model["quick_check_per_gL"] == target_model["quick_check"])
     gL_candidates = [gL for gL in gL_candidates if np.array_equal(
-        source_model["fingerprint_per_gL"][:, gL], target_model["fingerprint"])]
+        source_model["sorted_codes_per_gL"][:, gL], target_model["sorted_codes"])]
     if not gL_candidates:
         return None
     basis_left = source_model.get("basis_left")
     basis_right_per_gR = source_model.get("basis_right_per_gR")
-    if basis_left is None or basis_right_per_gR is None:   # not cached: compute now
+    if basis_left is None or basis_right_per_gR is None:
+        # prepare_starting_model wasn't given the basis in advance, so work
+        # out what we need from the basis passed to this call instead
         if basis is None:
             raise ValueError("pass the basis to prepare_starting_model or to find_equivalence")
         basis_left = basis[:, :20].astype(np.int64)
-        basis_right_per_gR = basis[:, 20:].astype(np.int64) @ WH.T
+        basis_right_per_gR = basis[:, 20:].astype(np.int64) @ HALF_ENCODE_WEIGHTS.T
     for gL in gL_candidates[:max_gL]:
-        allowed = [target_model["right_halves_allowed"].get(int(code)) for code in basis_left @ WH[gL]]
+        allowed = [target_model["right_halves_allowed"].get(int(code))
+                  for code in basis_left @ HALF_ENCODE_WEIGHTS[gL]]
         if any(a is None for a in allowed):
             continue                                    # this g_L can't map every basis vector into the target
         gR_ok = None
@@ -382,7 +409,7 @@ def find_equivalence(source_model: Dict, target_model: Dict, basis: Optional[np.
                 break
         if gR_ok is None:
             continue
-        g_L, g_R = PARAMS[gL], PARAMS[int(np.flatnonzero(gR_ok)[0])]
+        g_L, g_R = RELABELLINGS[gL], RELABELLINGS[int(np.flatnonzero(gR_ok)[0])]
         positions = np.concatenate([_half_targets(*g_L), 20 + _half_targets(*g_R)])
         transformed = np.zeros_like(source_model["xi"])
         transformed[:, positions] = source_model["xi"]     # apply g
@@ -404,16 +431,20 @@ def trace_signature(xi: np.ndarray) -> Tuple:
 def basis_coefficients(basis: np.ndarray, target: np.ndarray) -> Optional[np.ndarray]:
     """Coefficients c with c.basis = target (mod 2), or None if target isn't in the span of basis."""
     n = basis.shape[0]
-    augmented = np.concatenate([basis.copy() % 2, np.eye(n, dtype=np.uint8)], axis=1)
+    # each row is [basis row (40 columns) | which original basis rows were
+    # added to make it (n columns)].  Row-reducing the left side while
+    # carrying the right side along lets us read off, at the end, which
+    # combination of the ORIGINAL basis rows equals any row we reduced to.
+    basis_and_coeffs = np.concatenate([basis.copy() % 2, np.eye(n, dtype=np.uint8)], axis=1)
     pivot_cols, rank = [], 0
     for col in range(40):
-        pivot_row = next((i for i in range(rank, n) if augmented[i, col]), None)
+        pivot_row = next((i for i in range(rank, n) if basis_and_coeffs[i, col]), None)
         if pivot_row is None:
             continue
-        augmented[[rank, pivot_row]] = augmented[[pivot_row, rank]]
+        basis_and_coeffs[[rank, pivot_row]] = basis_and_coeffs[[pivot_row, rank]]
         for i in range(n):
-            if i != rank and augmented[i, col]:
-                augmented[i] = (augmented[i] + augmented[rank]) % 2
+            if i != rank and basis_and_coeffs[i, col]:
+                basis_and_coeffs[i] = (basis_and_coeffs[i] + basis_and_coeffs[rank]) % 2
         pivot_cols.append(col); rank += 1
         if rank == n:
             break
@@ -421,19 +452,19 @@ def basis_coefficients(basis: np.ndarray, target: np.ndarray) -> Optional[np.nda
     coefficients = np.zeros(n, dtype=np.uint8)
     for i, col in enumerate(pivot_cols):
         if remainder[col]:
-            remainder = (remainder + augmented[i, :40]) % 2
-            coefficients = (coefficients + augmented[i, 40:]) % 2
+            remainder = (remainder + basis_and_coeffs[i, :40]) % 2
+            coefficients = (coefficients + basis_and_coeffs[i, 40:]) % 2
     return None if remainder.any() else coefficients
 
 
-def e1_change_of_basis_note(src_twists, src_names, dst_basis, dst_names, g) -> str:
+def e1_change_of_basis_note(source_twists, source_names, target_basis, target_names, g) -> str:
     """How the relabelled source twists sit inside the target basis ('1 + S + Sb' shown as E)."""
     notes = []
-    for name, vec in zip(src_names, src_twists):
-        coefficients = basis_coefficients(dst_basis, apply_g(vec, g[0], g[1]))
+    for name, vec in zip(source_names, source_twists):
+        coefficients = basis_coefficients(target_basis, apply_g(vec, g[0], g[1]))
         if coefficients is None:
             return "?"
-        terms = [dst_names[j] for j in range(len(coefficients)) if coefficients[j]]
+        terms = [target_names[j] for j in range(len(coefficients)) if coefficients[j]]
         if all(x in terms for x in ("1", "S", "Sb")):
             terms = ["E"] + [x for x in terms if x not in ("1", "S", "Sb")]
         notes.append(f"{name} -> " + (" + ".join(terms) if terms else "0"))
@@ -443,21 +474,25 @@ def e1_change_of_basis_note(src_twists, src_names, dst_basis, dst_names, g) -> s
 # --------------------------------------------------------------------------
 # printing
 # --------------------------------------------------------------------------
-_PURE = {frozenset(): None, frozenset({3, 4, 5, 6}): "1",
-         frozenset({1, 2, 5, 6}): "2", frozenset({1, 2, 3, 4}): "3"}
-_PURE_Y = {"1": {3, 4, 5, 6}, "2": {1, 2, 5, 6}, "3": {1, 2, 3, 4}}
+# A "pure" twist (no shift added) makes exactly one of these three chi
+# patterns periodic, and each one also forces a matching set of y's to be
+# periodic -- used below to recognise b1/b2/b3 and split off the leftover
+# shift.  Untwisted (no chi's periodic) is not a pure twist, hence None.
+_TWIST_FROM_CHI_PATTERN = {frozenset(): None, frozenset({3, 4, 5, 6}): "1",
+                          frozenset({1, 2, 5, 6}): "2", frozenset({1, 2, 3, 4}): "3"}
+_PERIODIC_Y_FOR_TWIST = {"1": {3, 4, 5, 6}, "2": {1, 2, 5, 6}, "3": {1, 2, 3, 4}}
 
 
 def twist_label(vec: np.ndarray) -> str:
     """'b1 + e12`3`4' -- a backtick marks an anti-holomorphic index."""
-    left_twist = _PURE.get(frozenset(i + 1 for i in range(6) if vec[2 + i]), "?")
-    right_twist = _PURE.get(frozenset(i + 1 for i in range(6) if vec[22 + i]), "?")
+    left_twist = _TWIST_FROM_CHI_PATTERN.get(frozenset(i + 1 for i in range(6) if vec[2 + i]), "?")
+    right_twist = _TWIST_FROM_CHI_PATTERN.get(frozenset(i + 1 for i in range(6) if vec[22 + i]), "?")
     if "?" in (left_twist, right_twist):
         return "<non standard>"
     pure_twist_vector = np.zeros(40, dtype=np.uint8)
     for twist, offset in ((left_twist, 0), (right_twist, 20)):
         if twist:
-            for i in _PURE_Y[twist]:
+            for i in _PERIODIC_Y_FOR_TWIST[twist]:
                 pure_twist_vector[offset + 2 + i - 1] = 1
                 pure_twist_vector[offset + 8 + i - 1] = 1
     shift = (vec + pure_twist_vector) % 2
@@ -482,10 +517,10 @@ def relabelling_note(g_half) -> str:
     return (moves or "identity") + (f" ; y<->w on {swapped}" if swapped else "")
 
 
-def describe_equivalence(src, dst, g, names) -> str:
+def describe_equivalence(source, target, g, names) -> str:
     """Readable note written into the output csv explaining equivalence"""
-    return (f"duplicate of {dst['label']}. "
+    return (f"duplicate of {target['label']}. "
             f"E3/E2 permutations -- holomorphic: {relabelling_note(g[0])}; "
             f"anti-holomorphic: {relabelling_note(g[1])}. "
             f"E1 change of basis (E = 1+S+Sb): "
-            f"{e1_change_of_basis_note(src['twists'], names[3:], dst['basis'], names, g)}")
+            f"{e1_change_of_basis_note(source['twists'], names[3:], target['basis'], names, g)}")

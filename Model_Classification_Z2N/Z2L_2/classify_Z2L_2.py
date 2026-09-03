@@ -5,9 +5,8 @@ Classification of the Z2L^2 T-folds on the SO(12) lattice from scratch:
 
   1. enumerate the full range of the parameters defining the twist basis
      vectors and keep those for which the basis satisfies the modular
-     invariance conditions (3.4).  The conditions are imposed directly on the
-     vectors -- including the two-loop four-fold overlap condition -- so no
-     hand-derived parameter relation enters, and no standard-form restriction
+     invariance conditions (3.4), including the two-loop four-fold overlap
+     condition, imposed directly on the vectors. No standard-form restriction
      (A1-A4, S1-S2 of section 4.3), no |N| <= 3 cut and no gauge fixing of n2
      or m4 is applied.
 

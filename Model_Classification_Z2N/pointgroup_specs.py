@@ -31,7 +31,7 @@ class Z2L_Z2:
 
     @staticmethod
     def params():
-        """Full range.  Only B1^2 = 0 mod 4 is used to keep the loop small."""
+        """Every n, N, m combination, pre-filtered by B1's own modular invariance condition; the rest are checked afterwards."""
         for n in BITS2:
             for N in BITS6:
                 if (sum(n) - sum(N)) % 4:
@@ -80,9 +80,9 @@ class Z2L_2_Z2R:
     @staticmethod
     def params():
         """
-        Full range, organised as (one-sided data) x (one-sided data): the
-        conditions involving only {1,S,Sbar,B1,B2} are applied first, and
-        likewise for {1,S,Sbar,B1bar}, before the mixed conditions are tested.
+        Every combination of the B1,B2 side and the B1bar side, each
+        pre-filtered by its own modular invariance conditions; the
+        conditions linking the two sides are checked afterwards.
         """
         left = [(n, N, m, M) for n in BITS2 for N in BITS6
                 if (sum(n) - sum(N)) % 4 == 0
@@ -148,7 +148,7 @@ class Z2L_2:
 
     @staticmethod
     def params():
-        """Full range.  Only B1^2 = 0 mod 4 is used to keep the loop small."""
+        """Every n, N, m, M combination, pre-filtered by B1's own modular invariance condition; the rest are checked afterwards."""
         for n in BITS2:
             for N in BITS6:
                 if (sum(n) - sum(N)) % 4:
@@ -188,9 +188,9 @@ class Z2L_Z2R:
     @staticmethod
     def params():
         """
-        Full range, organised as (one-sided data) x (one-sided data): each
-        side's own self modular-invariance condition is applied first, before
-        the cross conditions between B1 and B1bar are tested.
+        Every combination of B1 and B1bar, each pre-filtered by its own
+        modular invariance condition; the condition linking the two is
+        checked afterwards.
         """
         side = [(n, N) for n in BITS2 for N in BITS6 if (sum(n) - sum(N)) % 4 == 0]
         for (n12, N) in side:

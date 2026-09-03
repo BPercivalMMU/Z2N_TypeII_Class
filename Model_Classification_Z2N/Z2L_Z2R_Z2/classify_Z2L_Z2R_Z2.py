@@ -11,8 +11,8 @@ Classification of the Z2L x Z2R x Z2 T-folds on the SO(12) lattice from scratch:
          B_{22bar} = [b22bar + m.e + m.ebar] m = (0^2, m3456), symmetric
 
      and keep those for which {1, S, Sbar, B1, B1bar, B_{22bar}} satisfies the
-     modular invariance conditions (3.4).  The conditions are imposed directly
-     on the vectors, so no hand-derived parameter relations enter.
+     modular invariance conditions (3.4). The conditions are imposed directly
+     on the vectors.
 
   2. reduce the surviving configurations modulo the equivalence relations
      E1-E3 of section 4.1, by an exhaustive search over G_L x G_R (see

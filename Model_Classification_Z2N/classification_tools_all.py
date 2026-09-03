@@ -1,12 +1,13 @@
 """
 classification_tools.py
 
-Generic engine behind the equivalence checks / classify scripts.
+Shared code used by the equivalence-check and classify scripts below.
 
-  check_models()  : test every pair of a given model list for equivalence
-                     under E1-E3 and write the input file back out with
+  check_models()  : compares every model in a given list against every other
+                     one, to find which pairs are equivalent under E1-E3,
+                     then writes the list back out with new columns:
                      Unique / ClassRepresentative / EquivalentTo /
-                     RelabellingToRepresentative / EquivalenceNotes columns.
+                     RelabellingToRepresentative / EquivalenceNotes.
 
   classify()      : enumerate the full parameter range, keep the modular
                      invariant choices, and reduce them modulo E1-E3.
@@ -75,39 +76,45 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
         assert FF.modular_invariant(m["basis"]), f"{m['label']} is not modular invariant"
     print("all input models are modular invariant")
 
-    buckets: Dict[tuple, List[int]] = {}
+    # group model indices by their trace_signature: only models sharing a
+    # signature can possibly be equivalent, so only those need comparing
+    same_signature_groups: Dict[tuple, List[int]] = {}
     for m in models:
-        buckets.setdefault(FF.trace_signature(m["xi"]), []).append(m["idx"])
+        same_signature_groups.setdefault(FF.trace_signature(m["xi"]), []).append(m["idx"])
 
-    parent = list(range(n))
+    # group_leader[i] is model i's current best guess at which model index
+    # leads its equivalence group; find() follows these guesses to the
+    # group's actual leader, and two models are found equivalent by pointing
+    # the higher-numbered one's leader at the lower-numbered one's
+    group_leader = list(range(n))
 
     def find(a):
-        while parent[a] != a:
-            parent[a] = parent[parent[a]]
-            a = parent[a]
+        while group_leader[a] != a:
+            group_leader[a] = group_leader[group_leader[a]]
+            a = group_leader[a]
         return a
 
-    for members in buckets.values():
-        for a in members:
+    for candidates in same_signature_groups.values():
+        for a in candidates:
             A = FF.prepare_starting_model(models[a]["xi"], models[a]["basis"])
-            for b in members:
+            for b in candidates:
                 if b <= a or find(a) == find(b):
                     continue
                 if FF.find_equivalence(A, FF.prepare_target_model(models[b]["xi"])):
                     ra, rb = find(a), find(b)
-                    parent[max(ra, rb)] = min(ra, rb)
+                    group_leader[max(ra, rb)] = min(ra, rb)
 
     classes: Dict[int, List[int]] = {}
     for k in range(n):
         classes.setdefault(find(k), []).append(k)
 
     rep_of, equiv_of, gmap, notes = {}, {}, {}, {}
-    for rep, members in classes.items():
-        for k in members:
+    for rep, group_members in classes.items():
+        for k in group_members:
             rep_of[k] = models[rep]["label"]
-            equiv_of[k] = ", ".join(models[j]["label"] for j in members if j != k)
+            equiv_of[k] = ", ".join(models[j]["label"] for j in group_members if j != k)
             if k == rep:
-                others = [models[j]["label"] for j in members if j != k]
+                others = [models[j]["label"] for j in group_members if j != k]
                 notes[k] = ("unique -- no other configuration in the list is "
                             "equivalent to it" if not others else
                             "class representative; equivalent model(s) in this "
@@ -144,9 +151,9 @@ def check_models(name: str, df: pd.DataFrame, bases: List[np.ndarray],
 
     print(f"\n{name}:  {n} models  ->  {len(classes)} inequivalent configurations")
     print(f"   {sum(1 for c in classes.values() if len(c) == 1)} already unique")
-    for rep, members in classes.items():
-        if len(members) > 1:
-            print("   " + "  =  ".join(models[k]["label"] for k in members))
+    for rep, group_members in classes.items():
+        if len(group_members) > 1:
+            print("   " + "  =  ".join(models[k]["label"] for k in group_members))
     print(f"\nwritten to {out_path}")
     return out
 
