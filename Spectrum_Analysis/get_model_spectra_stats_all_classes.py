@@ -24,14 +24,12 @@ Basis structures
 
 Phase scanning
 --------------
-  IIA/IIB (top-level, every class, both always scanned):
-    Sets C(1,1) (=+1 IIB, -1 IIA) and C(1,Sbar) (same sign) in the base 7x7
-    GGSO template before any structural/SUSY overrides are applied.
+  IIA/IIB is initial choice, both used as starting points.
     C(Sbar,Sbar) is not independently free -- modular invariance forces
-    C(Sbar,Sbar) = -C(1,Sbar) regardless of the template's own (Sbar,Sbar)
-    entry, so fixing C(1,1)/C(1,Sbar) is equivalent to fixing C(Sbar,Sbar).
+    C(Sbar,Sbar) = -C(1,Sbar) 
 
-  Structural variant phases (per class, scanned within each of IIA/IIB):
+  Key variant phases possibly acting as projectors on twisted supersectors 
+  (per class, scanned within each of IIA/IIB):
     Z2_2        : C_B1b1_B2b2                              -> 2 combos
     Z2L_Z2R     : C_B1_Bb1                                  -> 2 combos
     Z2L_2_Z2R   : C_B1_Bb1, C_B2_Bb1                       -> 4 combos
@@ -41,15 +39,17 @@ Phase scanning
 
   SUSY-breaking phases (worked out from each class's basis vectors):
     Z2, Z2_2    : none (all twists symmetric)
-    Z2L         : C(Sbar,B1)                      -> +1 breaking variant
-    Z2L_2       : C(Sbar,B1), C(Sbar,B2)          -> 3 breaking variants
-    Z2L_Z2R     : C(Sbar,B1), C(S,B_b1)           -> 3 breaking variants
+    Z2L         : C(Sbar,B1)                      
+    Z2L_2       : C(Sbar,B1), C(Sbar,B2)          
+    Z2L_Z2R     : C(Sbar,B1), C(S,B_b1)           
     Z2L_2_Z2R   : C(Sbar,B1), C(Sbar,B2),
-                  C(S,B_b1)                        -> 7 breaking variants
+                  C(S,B_b1)                       
     Z2L_2_Z2R_2 : C(Sbar,B1), C(Sbar,B2),
-                  C(S,B_b1), C(S,B_b2)            -> 15 breaking variants
-    Z2L_Z2      : C(Sbar,B1)                       -> +1 breaking variant
-    Z2L_Z2R_Z2  : C(Sbar,B1), C(S,B_b1)           -> 3 breaking variants
+                  C(S,B_b1), C(S,B_b2)            
+    Z2L_Z2      : C(Sbar,B1)                       
+    Z2L_Z2R_Z2  : C(Sbar,B1), C(S,B_b1)           
+
+    (We are only interested in SUSY-preserved models in this initial work)
 
 Outputs
 -------
@@ -73,7 +73,7 @@ import itertools
 import os
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed   #parallelisation
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -413,11 +413,9 @@ BASIS_BUILDERS: Dict[str, Any] = {
 # Row/col meaning: 0='1', 1=S, 2=Sbar, 3=B1/B_{1b1}, 4=B2/B_{2b2}, 5=B_b1, 6=B_b2
 # T[1,2]=C(S,Sbar)=+1 mandatory for gravitinos (same for IIA and IIB).
 #
-# IIA/IIB convention: C(1,1)=+1 for IIB, -1 for IIA (T[0,0]). C(1,Sbar) follows
-# the same sign (T[0,2]). Note C(Sbar,Sbar) is NOT independently free: the
-# diagonal-fill step in gso_from_template derives it as C(Sbar,Sbar) =
-# -C(1,Sbar) automatically via modular invariance, so T[2,2] here is set to
+# IIA/IIB convention:  T[2,2] here is set to
 # match for clarity but is overwritten regardless of its literal value.
+
 def _template_7x7(type_ii: str) -> np.ndarray:
     if type_ii not in ("IIA", "IIB"):
         raise ValueError(f"type_ii must be 'IIA' or 'IIB', got {type_ii!r}")
@@ -498,10 +496,10 @@ def gso_from_template(
 # ── Structural (non-SUSY-breaking) variant phases ─────────────────────────────
 
 def structural_variants(source: str) -> List[Dict[str, int]]:
-    """Phase combinations that select V/H content, NOT SUSY-breaking.
-
-    IIA/IIB is handled as a top-level loop in main() (it sets C(1,1)/C(1,Sbar)
-    in the base GGSO template directly), so it no longer appears here."""
+    """Phase combinations that select twisted (V/H_T etc) content.
+    IIA/IIB is handled as a loop in main() (it sets C(1,1)/C(1,Sbar)
+    in the base GGSO template directly)."""
+  
     if source == "Z2_2":
         return [{"C_B1b1_B2b2": b} for b in (+1, -1)]
     if source == "Z2L_Z2R":
@@ -706,10 +704,7 @@ def _run_one_job(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     proc_dir:      str            = job["proc_dir"]
     max_n_susy:    int            = int(job["max_n_susy"])
 
-    # susy_choice is empty exactly when the model class has no free SUSY-breaking
-    # knobs at all (e.g. Z2/Z2_2: their symmetric twists only fix helicities of
-    # S/Sbar states and cannot break SUSY) — omit the S/Sbar tag in that case
-    # rather than printing a misleading placeholder.
+    # susy_choice is empty when the model class has no free SUSY-breaking
     susy_tag   = format_susy_tag(susy_choice) if susy_choice else ""
     struct_tag = structural_phase_tag(source, struct_choice)
     label_parts = [source, type_ii, f"m{model_i}"]
@@ -831,7 +826,7 @@ def _write_collapsed_csv(
     df_in_idx = df_in.reset_index(drop=True).copy()
     df_in_idx.insert(0, "model_i", df_in_idx.index + 1)
     # Cross with TYPE_II so IIA and IIB outcomes for the same model are kept as
-    # separate rows rather than merged together (their outcomes are unrelated).
+    # separate rows rather than merged together.
     df_in_idx = df_in_idx.merge(pd.DataFrame({"TYPE_II": ["IIA", "IIB"]}), how="cross")
 
     has_mult = "MULTIPLET_MATCH" in df_out.columns
