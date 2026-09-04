@@ -3,14 +3,16 @@ classification_tools.py
 
 Shared code used by the equivalence-check and classify scripts below.
 
+  classify()      : enumerate the full parameter range, keep the modular
+                     invariant choices, and reduce them modulo E1-E3.
+
+ 
   check_models()  : compares every model in a given list against every other
                      one, to find which pairs are equivalent under E1-E3,
                      then writes the list back out with new columns:
                      Unique / ClassRepresentative / EquivalentTo /
                      RelabellingToRepresentative / EquivalenceNotes.
-
-  classify()      : enumerate the full parameter range, keep the modular
-                     invariant choices, and reduce them modulo E1-E3.
+                     (Included in case wanted for checking) 
 
 Both use FF_equivalence_checker_master.find_equivalence, which searches all of G_L x G_R
 (46080^2 relabellings) without enumerating it, and verifies every hit by
