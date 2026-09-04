@@ -1,9 +1,9 @@
-"""Build input files and run spectra for the two non-SUSY-enhancement models.
+"""Build input files and run spectra for the two non-SUSY enhanced models.
 
-Model 1 (N=0->1): Z2L_2_Z2R  — 6 basis vectors {1,S,Sbar,B1,B2,B1b}
-Model 2 (N=0->2): Z2L_2_Z2R_2 — 7 basis vectors {1,S,Sbar,B1,B2,B1b,B2b}
+Model 1 (N=0->1): Z2L_2_Z2R  has 6 basis vectors {1,S,Sbar,B1,B2,B1b}
+Model 2 (N=0->2): Z2L_2_Z2R_2 has 7 basis vectors {1,S,Sbar,B1,B2,B1b,B2b}
 
-Both use the IIB GGSO template with the following overrides:
+Both use the IIB GGSO template with the following choices:
   C(Sbar,Bα) = +1  (Bα = B1, B2)
   C(S, B̄β)  = +1  (B̄β = B1b [model 1] or B1b, B2b [model 2])
   C(Bα, B̄β) = +1  (every left/right pair; already the template's default)
@@ -79,12 +79,8 @@ BASIS_M2 = np.array([_1, _S, _Sbar, _B1, _B2, _B1b, _B2b], dtype=int)  # shape (
 #   so psib12 passes iff C(B1b, S+B1+B2) = delta_sec = -1, i.e.
 #   C(B1b,S)*C(B1b,B1)*C(B1b,B2) = -1.
 #   With C(B1b,S)=C(B1b,B1)=+1 fixed, we need C(B2,B1b) = -1 → (4,5):-1.
-#   This also enables RS_L in the S+B2 sector.
-#   For model 2: B2b projector imposes the same constraint on S+B1+B2, so
-#   additionally C(B1,B2b) = -1 → (3,6):-1 is required.  This is symmetric
-#   and also enables RS_R in the Sbar+B1b+B2b sector (B3b supersector).
-#   The S-sector gravitino remains killed by B1 (exponent=0, C(B1,S)=+1,
-#   delta=-1 → rhs=-1 ≠ +1 = lhs) regardless of the RS-enabling phases.
+#   Similar idea for model 2
+
 
 OVERRIDES_M1 = {(2, 3): +1, (2, 4): +1, (1, 5): +1, (4, 5): -1}
 OVERRIDES_M2 = {(2, 3): +1, (2, 4): +1, (1, 5): +1, (1, 6): +1,
