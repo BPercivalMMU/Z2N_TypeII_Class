@@ -15,8 +15,9 @@ Fermion conventions of the 40 boundary condition components:
 
 Point groups supported
 ----------------------
-This module used in every classify_*.py script the creates the 
-Z2^N model classification table.  The most complicated cases of Z2L_2_Z2R_2 and Z2L_Z2R_Z2 import it directly
+This module used in every classify_*.py script that finds models tabulated in
+Z2^N model classification table 15.  
+The most complicated cases of Z2L_2_Z2R_2 and Z2L_Z2R_Z2 import it directly
 
 The build_basis_* helpers below also cover the remaining order-two point groups (Z2, Z2_2, Z2L, Z2L_2,
 Z2L_Z2R) for reuse elsewhere -- those five are solved analytically.
@@ -38,10 +39,11 @@ Equivalence relations (section 4.1)
   E2  y^i <-> w^i, per direction, left and right independently
   E3  permutation of the holomorphic or anti-holomorphic indices
 
-E2 and E3 generate G = G_L x G_R with an S6 permutation of the six directions and then Z2^6 for the y<->w swaps, 
+E2 and E3 generate G = G_L x G_R with an S6 permutation of the six directions 
+and then Z2^6 for the y<->w swaps, 
 this gives |G_L| = |G_R| = 6! * 2^6 = 46080.
 find_equivalence() essentially searches the 46080^2 possibilities
-with g_L initially checked and g_R checked once a g_L is found so more efficient.
+A permutation element is called 'pi' and a Z2^6 y<->w flip is 'fl'.
 
 Modular invariance of the basis vectors, beta, is imposed:
 
@@ -336,9 +338,9 @@ def prepare_starting_model(xi: np.ndarray, basis: Optional[np.ndarray] = None) -
     Get the initial model's additive set ready to be transformed and matched
     against a target.
     """
-    # For every vector in Xi and every one of the 46080 possible g_L, pack
+    # For every vector in Xi and every one of the 46080 possible g_L, 
     # (left half after applying g_L, right-half tag that no g_R can change)
-    # into one number, then sort each g_L's column -- this describes what
+    # pack into one number, then sort each g_L's column: this describes what
     # Xi would look like under that g_L, as an order-independent list.
     left_under_every_gL = xi[:, :20].astype(np.int64) @ HALF_ENCODE_WEIGHTS.T
     sorted_codes_per_gL = np.sort(left_under_every_gL * 256 + _right_invariant(xi)[:, None], axis=0)
