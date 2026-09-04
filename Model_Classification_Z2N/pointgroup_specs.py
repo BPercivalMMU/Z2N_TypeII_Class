@@ -1,8 +1,7 @@
 """
 pointgroup_specs.py
 
-Per-point-group data: basis construction, the full parameter range and the
-table 15 transcription.
+Per-point-group data: basis construction and parameters.
 """
 import itertools
 
