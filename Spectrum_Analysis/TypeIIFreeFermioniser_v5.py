@@ -1,4 +1,4 @@
-# TypeIIFreeFermioniser.py  (v4)
+# TypeIIFreeFermioniser.py  (v5)
 # Updates from v3:
 # - Distinguishes LEFT vs RIGHT supersymmetry in the Comments labels and
 #   SpectrumStats fields ("gravitino_L"/"gravitino_R", "RS_L"/"RS_R") so that
@@ -19,24 +19,18 @@
 #   above the per-supersector spin breakdown.
 #
 # All v3 behaviour for the SUSY (N >= 2) case is preserved.  In particular:
-# - Processed states are written in a COMPLEX-fermion representation.
-# - Oscillators are collapsed to complex oscillators, e.g. psi1/psi2 -> psi12.
-# - Ramond vacua are written as left/right products.
-# - Internal complex pairs are taken consistently as:
-#       psi12 ; chi12, chi34, chi56 ; y12, y34, y56 ; w12, w34, w56
-#   and similarly on the right.
-# - Rows that do not admit this complex-pair interpretation are dropped at the
+#   Processed states are written in a COMPLEX-fermion representation.
+#   Oscillators are collapsed to complex oscillators, e.g. psi1/psi2 -> psi12.
+#   Ramond vacua are written as left/right products.
+#   Internal complex pairs are taken consistently 
+#   Rows that do not admit this complex-pair interpretation are dropped at the
 #   processed stage.
-# - RS identification uses complex oscillators:
+#   Possible RS identification prompted by twisted sectors:
 #       (0,8)  -> psi12 oscillator
 #       (8,0)  -> psib12 oscillator
-# - Untwisted S and Sbar are excluded from RS-sector counting.
-# - Twisted V_T/H_T are suppressed in any twisted supersector that contains
-#   RS-producing (8,0)/(0,8) sectors *that survived projection*.  When a
-#   SUSY-breaking phase projects the RS states out, the supersector is no
-#   longer flagged as RS and the V_T/H_T are kept as independent surviving
-#   content (paper §6.6).
-# - Processed CSV records RS producing supersectors and V_T/H_T producing
+#   V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
+#   scalar/vector are distinguished -> belonging to hyper/vector mult
+#   Processed CSV records RS producing supersectors and V_T/H_T producing
 #   twisted supersectors separately at the bottom.
 
 from __future__ import annotations
@@ -95,7 +89,7 @@ class SpectrumStats:
 
 def _sugra_multiplet_array(n_susy: int, h_max: float) -> List[int]:
     """Return spin-state count array [n0, n½, n1, n3/2, n2] for a massless
-    N=n_susy multiplet with highest helicity h_max.
+    N multiplet with highest helicity h_max.
 
     Convention
     ----------
@@ -125,8 +119,7 @@ def _sugra_multiplet_array(n_susy: int, h_max: float) -> List[int]:
         else:
             # h < 0: for non-self-conjugate multiplets, the negative-helicity state
             # has a CPT partner at |h| > 0 which must be counted as a positive-helicity
-            # physical state.  Self-conjugate multiplets already account for both
-            # helicities through the h=0 doubling above, so skip them.
+            # physical state.  
             if not cpt_self:
                 h_abs = abs(h)
                 idx = spin_idx.get(round(h_abs * 2) / 2.0)
@@ -174,7 +167,7 @@ def _match_multiplets_str(
     multiplets: List[Tuple[str, List[int]]],
 ) -> str:
     """Try to write spin_counts as a non-negative integer linear combination of
-    the given multiplet arrays.  Returns a human-readable string such as
+    the given multiplet arrays.  Returns a readable string such as
     ``'2*RS_N2 + 4*V_N2'`` or ``'no supermultiplet matching present'``.
     """
     if not multiplets or all(x == 0 for x in spin_counts):
@@ -578,7 +571,7 @@ class FreeFermionModel:
         sector, so they can form genuine complex-fermion pairs.
 
         Returns a dict with:
-          'sym_str'       – human-readable symmetry string
+          'sym_str'       – readable symmetry string
           'groups'        – list of group dicts for display
           'll_pairs'      – [(name_a, idx_a, name_b, idx_b, cname)]  genuine left-left pairs
           'rr_pairs'      – [(name_a, idx_a, name_b, idx_b, cname)]  genuine right-right pairs
