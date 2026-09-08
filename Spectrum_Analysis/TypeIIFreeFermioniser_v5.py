@@ -1,37 +1,45 @@
-# TypeIIFreeFermioniser.py  (v5)
-# Updates from v3:
-# - Distinguishes LEFT vs RIGHT supersymmetry in the Comments labels and
-#   SpectrumStats fields ("gravitino_L"/"gravitino_R", "RS_L"/"RS_R") so that
-#   SUSY-broken (N <= 2) models can be analysed correctly.  SpectrumStats now
-#   exposes n_susy_L, n_susy_R, n_rs_L, n_rs_R (with n_susy and n_rs still
-#   defined as the totals for backwards compatibility) and a spin_counts_total
-#   dict for the full spin histogram (the natural primary output for N=0).
-# - Supermultiplet matching is now available for N = 1..5.  At N=1 the library
-#   contains the (4D) supergravity, Rarita-Schwinger, vector and chiral
-#   multiplets:
-#       G_N1     = [0, 0, 0, 1, 1]
-#       RS_N1    = [0, 0, 1, 1, 0]
-#       V_N1     = [0, 1, 1, 0, 0]
-#       Chiral_N1= [2, 1, 0, 0, 0]
-#   At N=0 no multiplet matching is attempted; the processed CSV reports
-#   "N=0 — no supermultiplets; spin counts above are the full content."
-# - write_processed_csv now records the (n_susy_L, n_susy_R, total) tuple
-#   above the per-supersector spin breakdown.
-#
-# All v3 behaviour for the SUSY (N >= 2) case is preserved.  In particular:
-#   Processed states are written in a COMPLEX-fermion representation.
-#   Oscillators are collapsed to complex oscillators, e.g. psi1/psi2 -> psi12.
-#   Ramond vacua are written as left/right products.
-#   Internal complex pairs are taken consistently 
-#   Rows that do not admit this complex-pair interpretation are dropped at the
-#   processed stage.
-#   Possible RS identification prompted by twisted sectors:
-#       (0,8)  -> psi12 oscillator
-#       (8,0)  -> psib12 oscillator
-#   V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
+# TypeIIFreeFermioniser.py  
+
+#   This script reads produces the massless spectrum of states for a free 
+#   fermionic defined by the InBasis and InGSO input files that define the
+#   basis set of boundary condition basis vectors and GGSO matrix, resp.
+#   There is a _raw and a _processed output file, with the _processed output
+#   doing a lot of interpretation of the _raw states. In particular, states
+#   are given in complex fermion representation and their spin is defined with 
+#   with reference to the left and right spacetime fermions.
+#   Fermion complexification is standard across free fermionic literature e.g. 
+#    chi^12=chi^1\pm i chi^2, etc. For the internal fermions y^i,w^i, yb^i, wb^i
+#   the internal complex pairs are taken consistently between fermions with 
+#   shared boundary conditions in all sectors(/basis vectors_
+#   Ramond vacua are then written as left/right products.
+#   The identification of particular supermultiplets is given by two different 
+#   approaches: 
+#   1. All physical states are given a spin (0, 1/2, 1, 3/2, 2) and then the
+#   supermultiplet input file is used to try and group them into supermultiplets
+#   with respect to "supersectors" defined through addition of S and Sbar. 
+#   2. Certain states within a twisted supersectors get "flagged" as RS, V or H 
+#   when they indicate the presence of these multiplets. 
+#   In particular, a spin 3/2 state can arise from twisted sectors of the type:
+#   (0,8) or (8,0), which could give spin 3/2 (and the overall Rarita-Schwinger 
+#   multiplet containing it) if there's a Ramond spacetime fermion in the sector
+#   and the Ramond vacuum is hit by the opposite spacetime fermion as an oscillator.
+#   Similarly, V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
 #   scalar/vector are distinguished -> belonging to hyper/vector mult
-#   Processed CSV records RS producing supersectors and V_T/H_T producing
-#   twisted supersectors separately at the bottom.
+#   
+#   The _processed csv tries to find a "matching" of supermultiplets given the count of 
+#   states with each spin value. It also records RS producing supersectors and V_T/H_T-
+#   producing twisted supersectors separately at the bottom.
+
+
+#   Some capability to handle models with some susy-reduction is included (in this version). 
+#   Since the focus is on models with fully preserved supersymmetry, the handling of 
+#   'susy-reduced' models should be treated as provisional. The only exception is for the two 
+#   example models with SUSY-enhancement: N=0->1 and N=0->2. 
+#   For the purpose of analysing the SUSY reduced models, the output distinguishes left vs 
+#   right supersymmetry and spin 3/2 states are distinguished as left or right.
+#   The supermultiplet matching is available/attempted also at N=1, whilst
+#   for N=0 no multiplet matching is attempted (obviously).
+
 
 from __future__ import annotations
 
