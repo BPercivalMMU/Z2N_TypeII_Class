@@ -14,17 +14,17 @@
 #   Ramond vacua are then written as left/right products.
 #   The identification of particular supermultiplets is given by two different 
 #   approaches: 
-#   1. All physical states are given a spin (0, 1/2, 1, 3/2, 2) and then the
-#   supermultiplet input file is used to try and group them into supermultiplets
-#   with respect to "supersectors" defined through addition of S and Sbar. 
-#   2. Certain states within a twisted supersectors get "flagged" as RS, V or H 
-#   when they indicate the presence of these multiplets. 
-#   In particular, a spin 3/2 state can arise from twisted sectors of the type:
-#   (0,8) or (8,0), which could give spin 3/2 (and the overall Rarita-Schwinger 
-#   multiplet containing it) if there's a Ramond spacetime fermion in the sector
-#   and the Ramond vacuum is hit by the opposite spacetime fermion as an oscillator.
-#   Similarly, V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
-#   scalar/vector are distinguished -> belonging to hyper/vector mult
+#       1. All physical states are given a spin (0, 1/2, 1, 3/2, 2) and then the
+#       supermultiplet input file is used to try and group them into supermultiplets
+#       with respect to "supersectors" defined through addition of S and Sbar. 
+#       2. Certain states within a twisted supersectors get "flagged" as RS, V or H 
+#       when they indicate the presence of these multiplets. 
+#       In particular, a spin 3/2 state can arise from twisted sectors of the type:
+#       (0,8) or (8,0), which could give spin 3/2 (and the overall Rarita-Schwinger 
+#       multiplet containing it) if there's a Ramond spacetime fermion in the sector
+#       and the Ramond vacuum is hit by the opposite spacetime fermion as an oscillator.
+#       Similarly, V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
+#       scalar/vector are distinguished -> belonging to hyper/vector mult
 #   
 #   The _processed csv tries to find a "matching" of supermultiplets given the count of 
 #   states with each spin value. It also records RS producing supersectors and V_T/H_T-
