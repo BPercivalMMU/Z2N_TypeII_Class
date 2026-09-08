@@ -1,44 +1,81 @@
-# TypeIIFreeFermioniser.py  
+r"""
+TypeIIFreeFermioniser_v5.py
 
-#   This script reads produces the massless spectrum of states for a free 
-#   fermionic defined by the InBasis and InGSO input files that define the
-#   basis set of boundary condition basis vectors and GGSO matrix, resp.
-#   There is a _raw and a _processed output file, with the _processed output
-#   doing a lot of interpretation of the _raw states. In particular, states
-#   are given in complex fermion representation and their spin is defined with 
-#   with reference to the left and right spacetime fermions.
-#   Fermion complexification is standard across free fermionic literature e.g. 
-#    chi^12=chi^1\pm i chi^2, etc. For the internal fermions y^i,w^i, yb^i, wb^i
-#   the internal complex pairs are taken consistently between fermions with 
-#   shared boundary conditions in all sectors(/basis vectors_
-#   Ramond vacua are then written as left/right products.
-#   The identification of particular supermultiplets is given by two different 
-#   approaches: 
-#       1. All physical states are given a spin (0, 1/2, 1, 3/2, 2) and then the
-#       supermultiplet input file is used to try and group them into supermultiplets
-#       with respect to "supersectors" defined through addition of S and Sbar. 
-#       2. Certain states within a twisted supersectors get "flagged" as RS, V or H 
-#       when they indicate the presence of these multiplets. 
-#       In particular, a spin 3/2 state can arise from twisted sectors of the type:
-#       (0,8) or (8,0), which could give spin 3/2 (and the overall Rarita-Schwinger 
-#       multiplet containing it) if there's a Ramond spacetime fermion in the sector
-#       and the Ramond vacuum is hit by the opposite spacetime fermion as an oscillator.
-#       Similarly, V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where  
-#       scalar/vector are distinguished -> belonging to hyper/vector mult
-#   
-#   The _processed csv tries to find a "matching" of supermultiplets given the count of 
-#   states with each spin value. It also records RS producing supersectors and V_T/H_T-
-#   producing twisted supersectors separately at the bottom.
+This script produces the massless spectrum of states for a free fermionic
+model defined by the InBasis and InGSO input files that give the set of
+boundary condition basis vectors and the GGSO matrix, respectively.
+There is a _raw and a _processed output file, with the _processed output
+doing a lot of interpretation of the _raw states. In particular, states
+are given in complex fermion representation and their spin is defined with
+reference to the left and right spacetime fermions.
+Fermion complexification is standard across free fermionic literature e.g.
+chi^12 = chi^1 \pm i chi^2, etc. For the internal fermions y^i, w^i, yb^i, wb^i
+the internal complex pairs are taken consistently between fermions with
+shared boundary conditions in all sectors (/basis vectors).
+Ramond vacua are then written as left/right products.
 
+Reading off the physical states in the _processed output
+--------------------------------------------------------
+Complex conjugate oscillators are written with a 'c' on the end, e.g. psi12c,
+chi12c, taking the first fermion of a complex pair as the fundamental and the
+second as its conjugate. This distinction carries physics, e.g. psi12 x psib12
+is the graviton whilst psi12 x psib12c is a scalar (dilaton/B-field), and
+chi12 x chib12 is a complex structure modulus whilst chi12 x chib12c is a
+Kahler modulus.
 
-#   Some capability to handle models with some susy-reduction is included (in this version). 
-#   Since the focus is on models with fully preserved supersymmetry, the handling of 
-#   'susy-reduced' models should be treated as provisional. The only exception is for the two 
-#   example models with SUSY-enhancement: N=0->1 and N=0->2. 
-#   For the purpose of analysing the SUSY reduced models, the output distinguishes left vs 
-#   right supersymmetry and spin 3/2 states are distinguished as left or right.
-#   The supermultiplet matching is available/attempted also at N=1, whilst
-#   for N=0 no multiplet matching is attempted (obviously).
+Only one state of each CPT pair should be counted, so rows giving a CPT
+conjugate are still listed but are left with an empty Spin entry, which keeps
+them out of the spin counts and the supermultiplet matching. These are the
+negative helicity combinations of the spacetime oscillators, i.e. psi12c x
+psib12c (the h=-2 partner of the graviton) and a lone psi12c or psib12c
+(h=-1), together with the '-' helicity Ramond states. Note that a 'c' on an
+internal chi/y/w oscillator is not a CPT conjugate in this sense: chi12 and
+chi12c give genuinely different moduli, as above, and both are counted.
+Rows which do not admit a consistent complex pair interpretation are dropped
+at the processed stage.
+
+Spins are then read off as:
+    both sides NS: from the oscillators, so psi12 x psib12 -> 2, a single
+    psi12 or psib12 -> 1, and chi/y/w oscillators -> 0.
+    one side Ramond: 3/2 if the Ramond vacuum is hit by the spacetime
+    oscillator of the other side, otherwise 1/2.
+    both sides Ramond, i.e. (8,8) sectors: from sigma, the helicity product of
+    the two spacetime Ramond vacua, which separates vectors from scalars (the
+    sign convention here swaps between IIA and IIB).
+
+The identification of particular supermultiplets is given by two different
+approaches:
+    1. All physical states are given a spin (0, 1/2, 1, 3/2, 2) and then the
+    supermultiplet input file is used to try and group them into supermultiplets
+    with respect to "supersectors" defined through addition of S and Sbar.
+    2. Certain states within a twisted supersectors get "flagged" as RS, V or H
+    when they indicate the presence of these multiplets.
+    In particular, a spin 3/2 state can arise from twisted sectors of the type:
+    (0,8) or (8,0), which could give spin 3/2 (and the overall Rarita-Schwinger
+    multiplet containing it) if there's a Ramond spacetime fermion in the sector
+    and the Ramond vacuum is hit by the opposite spacetime fermion as an oscillator.
+    Similarly, V_T/H_T flags identify key states in twisted N=2 (8,8) supersectors where
+    scalar/vector are distinguished -> belonging to hyper/vector mult
+
+The _processed csv tries to find a "matching" of supermultiplets given the count of
+states with each spin value. It also records RS producing supersectors and V_T/H_T-
+producing twisted supersectors separately at the bottom.
+Its layout is: the basis vectors and GGSO matrix used; the internal symmetry
+group, with the fermion groups sharing boundary conditions and the complex
+pairings that follow from them; the states listed sector by sector and grouped
+into supersectors; the RS producing, V_T/H_T producing and all twisted
+supersectors; and then a spin breakdown per supersector with the
+supermultiplet matching.
+
+Some capability to handle models with some susy-reduction is included (in this version).
+Since the focus is on models with fully preserved supersymmetry, the handling of
+'susy-reduced' models should be treated as provisional. The only exception is for the two
+example models with SUSY-enhancement: N=0->1 and N=0->2.
+For the purpose of analysing the SUSY reduced models, the output distinguishes left vs
+right supersymmetry and spin 3/2 states are distinguished as left or right.
+The supermultiplet matching is available/attempted also at N=1, whilst
+for N=0 no multiplet matching is attempted (obviously).
+"""
 
 
 from __future__ import annotations
@@ -145,7 +182,7 @@ def _multiplet_library(n_susy: int) -> List[Tuple[str, List[int]]]:
     the N=1 chiral multiplet has one Weyl fermion + one complex scalar = 2 real
     scalars and 1 fermion polarisation pair = [2, 1, 0, 0, 0]).
     For N=2, the library is: SUGRA, RS, V (vector), H (full hypermultiplet = [4,2,0,0,0]).
-    For N=3,4,5, the library is: SUGRA, RS, V only — the hypermultiplet is not a standard
+    For N=3,4,5, the library is: SUGRA, RS, V only. The hypermultiplet is not a standard
     short multiplet at these SUSY levels and is omitted to avoid spurious matches.
 
     The H_N2 entry is defined as 2 × the half-hypermultiplet (h_max=1/2, CPT self-
@@ -579,13 +616,13 @@ class FreeFermionModel:
         sector, so they can form genuine complex-fermion pairs.
 
         Returns a dict with:
-          'sym_str'       – readable symmetry string
-          'groups'        – list of group dicts for display
-          'll_pairs'      – [(name_a, idx_a, name_b, idx_b, cname)]  genuine left-left pairs
-          'rr_pairs'      – [(name_a, idx_a, name_b, idx_b, cname)]  genuine right-right pairs
-          'lr_pairs'      – [(name_L, idx_L, name_R, idx_R, cname)]  left-right (Ising) pairs
-          'left_singles'  – [(name, idx)]  unpaired left fermions
-          'right_singles' – [(name, idx)]  unpaired right fermions
+          'sym_str'       : readable symmetry string
+          'groups'        : list of group dicts for display
+          'll_pairs'      : [(name_a, idx_a, name_b, idx_b, cname)]  genuine left-left pairs
+          'rr_pairs'      : [(name_a, idx_a, name_b, idx_b, cname)]  genuine right-right pairs
+          'lr_pairs'      : [(name_L, idx_L, name_R, idx_R, cname)]  left-right (Ising) pairs
+          'left_singles'  : [(name, idx)]  unpaired left fermions
+          'right_singles' : [(name, idx)]  unpaired right fermions
         """
         import re
         from collections import defaultdict
@@ -699,6 +736,7 @@ class FreeFermionModel:
         return np.exp(1j * np.pi * x)
 
     def massless_raw(self) -> pd.DataFrame:
+        """Every massless state surviving the GGSO projections, sector by sector."""
         sectors, b_sectors, sectors_unred = self.generate_sectors()
         masses = self.calculate_sector_masses(sectors)
         labels = self.fermion_labels()
@@ -820,6 +858,8 @@ class FreeFermionModel:
     def processed_from_raw(
         self, df_raw: pd.DataFrame
     ) -> Tuple[pd.DataFrame, List[Tuple[int, ...]], List[Tuple[int, ...]], List[Tuple[int, ...]]]:
+        """Rewrite the raw states in the complex fermion representation, give them a
+        spin, flag the RS/V/H states and group everything into supersectors."""
         out_cols = [
             "Sector",
             "State",
@@ -1073,13 +1113,13 @@ class FreeFermionModel:
             """Return one sign per Ramond LR (Ising) pair: '+' if both components
             share the same helicity, '-' if they are opposite.  Returns an empty
             list when no LR pair is Ramond.  Returns None on inconsistency (one
-            side Ramond, the other not — should not happen with BC-matched pairs)."""
+            side Ramond, the other not, which should not happen with BC-matched pairs)."""
             out: List[str] = []
             for na, _, nb, _, _ in lr_pairs_info:
                 sa = hel_to_sign(row.get(na))
                 sb = hel_to_sign(row.get(nb))
                 if sa is None and sb is None:
-                    continue                 # pair is NS in this sector — skip
+                    continue                 # pair is NS in this sector, so skip
                 if sa is None or sb is None:
                     return None             # unexpected inconsistency
                 out.append("+" if sa * sb > 0 else "-")
@@ -1190,7 +1230,7 @@ class FreeFermionModel:
                 elif alpha_t == (0, 8):
                     if (delt == -1) and (a_psib1 == 1):
                         if is_plus_helicity(psib1) and ("psi12" in osc):
-                            # Spin-3/2 from (0,8) sector — right-handed RS fermion.
+                            # Spin-3/2 from (0,8) sector, so a right-handed RS fermion.
                             # As above, can survive even with right SUSY broken.
                             return "RS_R"
 
@@ -1310,7 +1350,7 @@ class FreeFermionModel:
                 return comment          # never overwrite an existing label
             # Chi V_T only makes sense in TWISTED supersectors (RS multiplets
             # live in twisted sectors).  Untwisted sectors (1, S, Sbar, S+Sbar)
-            # must not receive this label — their chi-oscillator states are
+            # must not receive this label, as their chi-oscillator states are
             # dilatino partners of the gravitino, not RS-multiplet partners.
             sk = row.get("super_key")
             if sk in untwisted_superkeys:
@@ -1346,7 +1386,7 @@ class FreeFermionModel:
         rs_superkeys = set(df.loc[df["is_rs_sector"] == True, "super_key"].tolist())
 
         # Suppress V_T/H_T that come from (8,8) twisted sectors inside RS supersectors.
-        # Chi-oscillator V_T from (0,8)/(8,0) sectors must NOT be suppressed — they are
+        # Chi-oscillator V_T from (0,8)/(8,0) sectors must NOT be suppressed, they are
         # genuine members of the RS supermultiplet.
         #
         # Note for SUSY-broken models: rs_superkeys is built from rows where
@@ -1363,7 +1403,7 @@ class FreeFermionModel:
             df["(α_L,α_R)"].apply(lambda x: x == (8, 8))
         )
         df.loc[mask_rs_superkey_vh, "Comments"] = ""
-        # Spin is NOT reset here — V_T states retain their sigma-based spin="1" so that
+        # Spin is NOT reset here, V_T states retain their sigma-based spin="1" so that
         # the RS supersector spin breakdown correctly shows the vector content.
 
         def is_vh_t_sector_row(row: pd.Series) -> bool:
@@ -1414,6 +1454,8 @@ class FreeFermionModel:
         rs_keys: List[Tuple[int, ...]],
         vh_t_keys: List[Tuple[int, ...]],
     ) -> SpectrumStats:
+        """Count the processed states into the SpectrumStats summary: SUSY level,
+        RS states, vector/hyper content and the spin totals."""
         mi_ok = bool(self.verify_basis_prod_matrix() and self.verify_gso_invariance())
 
         if processed_df is None or processed_df.empty:
@@ -1468,7 +1510,7 @@ class FreeFermionModel:
         n_v = n_v_rr + n_v_t
         n_h = n_h_rr + n_h_t
 
-        # Spin counts across the full spectrum -- the main observable for N=0 models.
+        # Spin counts across the full spectrum, the main observable for N=0 models.
         spin_series = processed_df["Spin"].fillna("").astype(str).str.strip() \
             if "Spin" in processed_df.columns else pd.Series([], dtype=str)
         spin_dict_raw = spin_series.value_counts().to_dict()
@@ -1510,6 +1552,7 @@ class FreeFermionModel:
         rs_keys: List[Tuple[int, ...]],
         vh_t_keys: List[Tuple[int, ...]],
     ) -> None:
+        """Write the _processed csv, laid out as described at the top of this script."""
         os.makedirs(os.path.dirname(output_csv) or ".", exist_ok=True)
 
         # Determine the SUSY level (and side decomposition) from the gravitino counts
@@ -1631,7 +1674,7 @@ class FreeFermionModel:
             # Spin breakdown tables for each supersector
             spin_order = ["0", "1/2", "1", "3/2", "2"]
 
-            # Load multiplet library once — prefer CSV over computed fallback.
+            # Load multiplet library once, preferring the CSV over the computed fallback.
             # _multiplet_library handles any N >= 1; N=0 reports raw spin counts only.
             if n_susy >= 1:
                 csv_lib = (
@@ -1704,7 +1747,7 @@ class FreeFermionModel:
                     # N=0: no supermultiplet matching. Report raw spin content.
                     w.writerow([
                         "Supermultiplet matching:",
-                        "N=0 — no supermultiplets; spin counts above are the full content.",
+                        "N=0: no supermultiplets; spin counts above are the full content.",
                     ])
 
     def compute(
@@ -1713,9 +1756,11 @@ class FreeFermionModel:
         write_raw_csv: Optional[str] = None,
         write_processed_csv: Optional[str] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, SpectrumStats]:
+        """Run the lot: check modular invariance, then build the raw spectrum, the
+        processed spectrum and the stats. Raises if modular invariance fails."""
         failures = self._modular_invariance_diagnostics()
         if failures:
-            lines = ["Modular invariance check FAILED — spectrum not computed."]
+            lines = ["Modular invariance check FAILED: spectrum not computed."]
             lines += [f"  • {f}" for f in failures]
             raise ValueError("\n".join(lines))
         df_raw = self.massless_raw()

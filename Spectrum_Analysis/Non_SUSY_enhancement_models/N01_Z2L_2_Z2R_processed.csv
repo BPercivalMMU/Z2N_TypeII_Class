@@ -315,7 +315,7 @@ Spin,Number of states
 3/2,0
 2,1
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[6, 8, 4, 0, 1]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 0 1 0]
 Spin,Number of states
@@ -325,7 +325,7 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[8, 8, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 1 0 0]
 Spin,Number of states
@@ -335,7 +335,7 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[12, 6, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 1 1 0]
 Spin,Number of states
@@ -345,7 +345,7 @@ Spin,Number of states
 3/2,1
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[12, 7, 2, 1, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 0 0 1]
 Spin,Number of states
@@ -355,7 +355,7 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[8, 6, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 0 1 1]
 Spin,Number of states
@@ -365,7 +365,7 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[12, 8, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 1 0 1]
 Spin,Number of states
@@ -375,7 +375,7 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[12, 8, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
 
 [0 * * 1 1 1]
 Spin,Number of states
@@ -385,4 +385,4 @@ Spin,Number of states
 3/2,0
 2,0
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[12, 8, 2, 0, 0]"
-Supermultiplet matching:,N=0 — no supermultiplets; spin counts above are the full content.
+Supermultiplet matching:,N=0: no supermultiplets; spin counts above are the full content.
