@@ -1,9 +1,9 @@
 # Spectrum Analysis
 
 Computes the massless spectrum of Z2 free fermionic Type II orbifold models
-across all nine order-two point-group classes 
+across all nine order-two point-group classes.
 
-### `TypeIIFreeFermioniser_v5.py` — single-model spectrum engine
+### `TypeIIFreeFermioniser_v5.py`: the spectrum of a single model
 
 Given a set of basis vectors and a GGSO phase matrix, this
 computes the full massless spectrum for one model: it verifies modular
@@ -17,7 +17,7 @@ Run standalone, it reads a single model's basis from
 `Output_typeII/`. `get_model_spectra_stats_all_classes.py` (below) imports
 this script's `FreeFermionModel` class to then get the spectra stats for models.
 
-### `get_model_spectra_stats_all_classes.py` — processes all models/classes
+### `get_model_spectra_stats_all_classes.py`: all models in all classes
 
 Reads every row of the 9 input CSVs in
 `All_Z2N_Input_Models_updated_310826/` (one file per point-group class:
@@ -39,15 +39,24 @@ A few key details:
 - **Outputs**:
   - `Processed_Spectra_SUSY/{class}/{IIA,IIB}/{run_label}_processed.csv`
    gives processed spectra (SUSY-preserving runs) for each model
-  - `Processed_Spectra_non_SUSY/{class}/{IIA,IIB}/...` — same, for
+  - `Processed_Spectra_non_SUSY/{class}/{IIA,IIB}/...` the same, for
     SUSY-breaking variants (not enabled here as focused on preserved SUSY)
 
 ### `build_nonsusy_enhanced_models.py`
 
 A small additional script that reuses the same machinery to build and run the two
-specific non-SUSY enhancemed models given in paper: `Z2L_2_Z2R` with N=0->1 and 
+specific non-SUSY enhanced models given in the paper: `Z2L_2_Z2R` with N=0->1 and 
 `Z2L_2_Z2R_2` with N=0->2. Inputs are in `inputs_nonSUSY_enhanced/` and output:
 `Non_SUSY_enhancement_models/`.
+
+### `Input_typeII/supermultiplets.csv`
+
+The massless multiplets of each extended supersymmetry, taken from table 20 of
+the paper, as spin-state counts `[n0, n_half, n1, n_3half, n2]`. Both the
+`_processed` files and the summary stats read their multiplets from here, so
+the supermultiplet matching quoted in the two places always agrees. If a
+SUSY level is missing from this file the code falls back to computing the
+multiplets itself.
 
 ## Input model labelling
 

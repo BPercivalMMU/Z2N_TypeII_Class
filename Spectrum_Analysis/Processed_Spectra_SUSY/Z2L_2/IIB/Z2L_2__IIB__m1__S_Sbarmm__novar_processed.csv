@@ -310,8 +310,8 @@ All twisted supersectors:
 
 Spin breakdown by supersector:
 "SUSY level (n_susy_L, n_susy_R, total):",1,4,5
-Multiplet library source:,computed
-Multiplets used:,"SUGRA_N5=[10, 11, 10, 5, 1]","RS_N5=[20, 15, 6, 1, 0]","V_N5=[20, 15, 6, 1, 0]"
+Multiplet library source:,CSV
+Multiplets used:,"G_N5=[10, 11, 10, 5, 1]","RS_N5=[20, 15, 6, 1, 0]"
 
 Untwisted supersector
 Spin,Number of states
@@ -321,7 +321,7 @@ Spin,Number of states
 3/2,5
 2,1
 "Spin vector [n0, n1/2, n1, n3/2, n2]:","[10, 11, 10, 5, 1]"
-Supermultiplet matching (N=5):,1*SUGRA_N5
+Supermultiplet matching (N=5):,1*G_N5
 
 [0 * * 0 1]
 Spin,Number of states

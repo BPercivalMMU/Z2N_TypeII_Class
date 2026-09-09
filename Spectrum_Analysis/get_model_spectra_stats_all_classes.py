@@ -25,8 +25,8 @@ Basis structures
 Phase scanning
 --------------
   IIA/IIB is initial choice, both used as starting points.
-    C(Sbar,Sbar) is not independently free -- modular invariance forces
-    C(Sbar,Sbar) = -C(1,Sbar) 
+    C(Sbar,Sbar) is not independently free, since modular invariance forces
+    C(Sbar,Sbar) = -C(1,Sbar)
 
   Key variant phases possibly acting as projectors on twisted supersectors 
   (per class, scanned within each of IIA/IIB):
@@ -413,8 +413,9 @@ BASIS_BUILDERS: Dict[str, Any] = {
 # Row/col meaning: 0='1', 1=S, 2=Sbar, 3=B1/B_{1b1}, 4=B2/B_{2b2}, 5=B_b1, 6=B_b2
 # T[1,2]=C(S,Sbar)=+1 mandatory for gravitinos (same for IIA and IIB).
 #
-# IIA/IIB convention:  T[2,2] here is set to
-# match for clarity but is overwritten regardless of its literal value.
+# IIA/IIB convention: T[2,2] = C(Sbar,Sbar) is -1 for IIB and +1 for IIA. It is
+# written out here so the convention is visible, but the diagonal is filled in
+# from the modular invariance conditions below, so this entry is not the one used.
 
 def _template_7x7(type_ii: str) -> np.ndarray:
     if type_ii not in ("IIA", "IIB"):
@@ -730,7 +731,10 @@ def _run_one_job(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     try:
         FreeFermionModel = _import_freefermion(typeiiff_path)
-        ff = FreeFermionModel.from_arrays(basis=basis, gso=gso, label=run_label, type_ii=type_ii)
+        # Hand over the same multiplet file the stats below use, so the _processed
+        # csv and the summary table quote the same multiplets.
+        ff = FreeFermionModel.from_arrays(basis=basis, gso=gso, label=run_label, type_ii=type_ii,
+                                          multiplet_csv=mult_csv)
         df_raw, df_proc, stats = ff.compute()
 
         if filter_susy and stats.n_susy > max_n_susy:
@@ -896,7 +900,7 @@ def main() -> None:
             dfs[source] = read_table_auto(path)
             print(f"[info] Loaded {source}: {len(dfs[source])} rows", flush=True)
         except FileNotFoundError:
-            print(f"[warn] {path} not found — skipping {source}", flush=True)
+            print(f"[warn] {path} not found, skipping {source}", flush=True)
 
     if not dfs:
         print("[error] No input files found.", flush=True)

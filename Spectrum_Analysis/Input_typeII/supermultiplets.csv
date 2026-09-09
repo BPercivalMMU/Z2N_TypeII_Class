@@ -1,12 +1,20 @@
 susy_level,name,n0,n_half,n1,n_3half,n2,notes
-1,G_N1,0,0,0,1,1,Supergravity multiplet N=1
-1,RS_N1,0,0,1,1,0,Rarita-Schwinger multiplet N=1
-1,V_N1,0,1,1,0,0,Vector multiplet N=1
-1,Chiral_N1,2,1,0,0,0,Chiral (scalar) multiplet N=1
-2,G_N2,0,0,1,2,1,Supergravity multiplet (Table 19 Z2n_Class)
-2,RS_N2,0,1,2,1,0,Rarita-Schwinger multiplet (Table 19 Z2n_Class)
-2,V_N2,2,2,1,0,0,Vector multiplet (Table 19 Z2n_Class)
-2,H_N2,4,2,0,0,0,Full hypermultiplet (Table 19 Z2n_Class)
-2,Half_H_N2,2,1,0,0,0,Half-hypermultiplet self-conjugate (Table 19 Z2n_Class)
-6,G_N6,30,26,16,6,1,Supergravity multiplet N=6 (h_max=2; note V_N6 has identical spin content due to CPT structure at N=6)
-6,RS_N6,20,15,6,1,0,Rarita-Schwinger multiplet N=6 (h_max=3/2; CPT self-conjugate since h_max=n_susy/4=1.5)
+1,G_N1,0,0,0,1,1,Supergravity multiplet N=1 (table 20)
+1,RS_N1,0,0,1,1,0,Rarita-Schwinger multiplet N=1 (table 20)
+1,V_N1,0,1,1,0,0,Vector multiplet N=1 (table 20)
+1,Chiral_N1,2,1,0,0,0,Chiral (scalar) multiplet N=1 (table 20)
+2,G_N2,0,0,1,2,1,Supergravity multiplet N=2 (table 20)
+2,RS_N2,0,1,2,1,0,Rarita-Schwinger multiplet N=2 (table 20)
+2,V_N2,2,2,1,0,0,Vector multiplet N=2 (table 20)
+2,H_N2,4,2,0,0,0,"Full hypermultiplet (table 20). The half-hypermultiplet [2 1 0 0 0] is deliberately left out: no model in the paper contains one, and offering it would let two half-hypers stand in for a full hyper. A spectrum matchable only with half-hypers is reported as unmatched instead."
+3,G_N3,0,1,3,3,1,Supergravity multiplet N=3 (table 20)
+3,RS_N3,2,3,3,1,0,Rarita-Schwinger multiplet N=3 (table 20)
+3,V_N3,6,4,1,0,0,Vector multiplet N=3 (table 20)
+4,G_N4,2,4,6,4,1,Supergravity multiplet N=4 (table 20)
+4,RS_N4,8,7,4,1,0,Rarita-Schwinger multiplet N=4 (table 20)
+4,V_N4,6,4,1,0,0,Vector multiplet N=4 (table 20)
+5,G_N5,10,11,10,5,1,Supergravity multiplet N=5 (table 20)
+5,RS_N5,20,15,6,1,0,Rarita-Schwinger multiplet N=5 (table 20; no vector multiplet exists at N=5)
+6,G_N6,30,26,16,6,1,Supergravity multiplet N=6 (table 20)
+6,RS_N6,20,15,6,1,0,Rarita-Schwinger multiplet N=6 (table 20; no vector multiplet exists at N=6)
+8,G_N8,70,56,28,8,1,Supergravity multiplet N=8 (table 20; the only multiplet at N=8)

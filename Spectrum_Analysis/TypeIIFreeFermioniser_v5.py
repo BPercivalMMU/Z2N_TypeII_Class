@@ -14,6 +14,32 @@ the internal complex pairs are taken consistently between fermions with
 shared boundary conditions in all sectors (/basis vectors).
 Ramond vacua are then written as left/right products.
 
+How the spectrum is obtained
+----------------------------
+    1. Check the modular invariance conditions on the input basis and GGSO
+    matrix. Nothing is computed if any of them fail.
+    2. Build the additive set, i.e. all sectors reached as sums of the basis
+    vectors mod 2.
+    3. Work out the left and right vacuum masses of each sector and keep the
+    ones that can give massless level matched states. These come in four cases,
+    labelled by the degeneracy of the Ramond vacuum on each side:
+        (0,0) NS on both sides, needing one oscillator on each side,
+        (8,0) and (0,8) Ramond on one side and NS on the other, needing a
+        single oscillator on the NS side,
+        (8,8) Ramond on both sides, with no oscillators.
+    4. Write down every candidate state in these sectors: the Ramond vacuum
+    spin assignments, restricted to those consistent with the complex fermion
+    pairings, together with the oscillators that step 3 requires.
+    5. Apply the GGSO projection of each basis vector to every candidate and
+    keep the states that survive all of them. These are the _raw output.
+    6. Rewrite the survivors in complex fermion notation, give each one a spin,
+    leave one state of each CPT pair out of the counting, and collect the
+    sectors into supersectors by adding S and Sbar. This is the _processed
+    output, described in more detail below.
+    7. Count the spins in each supersector and match them against the
+    supermultiplets in the input file, flagging the supersectors that produce
+    RS and V_T/H_T states.
+
 Reading off the physical states in the _processed output
 --------------------------------------------------------
 Complex conjugate oscillators are written with a 'c' on the end, e.g. psi12c,
@@ -176,27 +202,36 @@ def _sugra_multiplet_array(n_susy: int, h_max: float) -> List[int]:
 def _multiplet_library(n_susy: int) -> List[Tuple[str, List[int]]]:
     """Return [(name, array)] for the standard massless multiplets at SUSY level n_susy.
 
-    For N=1, the library is: SUGRA (supergravity), RS (Rarita-Schwinger), V (vector),
-    and Chiral (= 2× h_max=½ multiplet, CPT self-conjugate = [2, 1, 0, 0, 0] × 2
-    or rather, in our convention with scalars doubled for non-self-conjugate:
-    the N=1 chiral multiplet has one Weyl fermion + one complex scalar = 2 real
-    scalars and 1 fermion polarisation pair = [2, 1, 0, 0, 0]).
-    For N=2, the library is: SUGRA, RS, V (vector), H (full hypermultiplet = [4,2,0,0,0]).
-    For N=3,4,5, the library is: SUGRA, RS, V only. The hypermultiplet is not a standard
-    short multiplet at these SUSY levels and is omitted to avoid spurious matches.
+    This is the fallback used when supermultiplets.csv has no rows for n_susy;
+    normally the csv is read instead.  Which multiplets exist at each level is
+    taken from table 20 of the paper:
 
-    The H_N2 entry is defined as 2 × the half-hypermultiplet (h_max=1/2, CPT self-
-    conjugate), giving the physically relevant full hypermultiplet [4, 2, 0, 0, 0].
+        N=1     SUGRA, RS, V, Chiral
+        N=2     SUGRA, RS, V, H
+        N=3,4   SUGRA, RS, V
+        N=5,6   SUGRA, RS           (no vector multiplet at these levels)
+        N=7,8   SUGRA               (N=7 and N=8 supergravity are the same)
+
+    Above N=4 the vector multiplet is not a separate short multiplet: building
+    one from h_max=1 just reproduces the RS array at N=5 and the SUGRA array at
+    N=6, which would make the matching ambiguous rather than richer.
+
+    The H entry is 2 x the half-hypermultiplet (h_max=1/2, CPT self-conjugate),
+    giving the full hypermultiplet [4, 2, 0, 0, 0].
     """
-    entries = []
-    slots = [("SUGRA", 2.0), ("RS", 1.5), ("V", 1.0)]
+    slots = [("SUGRA", 2.0)]
+    if n_susy <= 6:
+        slots.append(("RS", 1.5))
+    if n_susy <= 4:
+        slots.append(("V", 1.0))
     if n_susy == 2:
         slots.append(("H", 0.5))
     if n_susy == 1:
-        # N=1 chiral multiplet: half-hyper-like, CPT self-conjugate at h_max=1/2
-        # giving 1 Weyl fermion (=1 spin-1/2 state in positive-helicity counting)
-        # + 1 complex scalar (=2 real scalars).
+        # N=1 chiral multiplet: one Weyl fermion and one complex scalar, i.e.
+        # 2 real scalars and 1 spin-1/2 state.
         slots.append(("Chiral", 0.5))
+
+    entries = []
     for label, h_max in slots:
         arr = _sugra_multiplet_array(n_susy, h_max)
         if label == "H":
@@ -229,11 +264,11 @@ def _match_multiplets_str(
 
     max_coeffs = [max_c(a) for a in arrays]
 
-    # Depth-first search over coefficient combinations.
-    # Iterate from max coefficient down to 0 (greedy) so that multiplets listed
-    # earlier in the library are preferred.  With H_N2 before Half_H_N2 in the
-    # CSV, this ensures full hypermultiplets are used first and half-hypers only
-    # appear when no full-hyper solution exists.
+    # Depth-first search over coefficient combinations, taking each coefficient
+    # from its maximum down to 0 so that multiplets listed earlier in the
+    # library are used first. Only the multiplets in the library are offered, so
+    # a spectrum that none of them can build is reported as unmatched rather
+    # than being forced into a combination of smaller multiplets.
     def dfs(idx: int, remaining: List[int]) -> Optional[List[int]]:
         if idx == len(arrays):
             return [] if all(r == 0 for r in remaining) else None
@@ -1030,7 +1065,8 @@ class FreeFermionModel:
                 defs.append((f"psi{i}{i+1}", (f"psi{i}", f"psi{i+1}")))
             for i in range(1, self.comp_dim, 2):
                 defs.append((f"chi{i}{i+1}", (f"chi{i}", f"chi{i+1}")))
-            # Group-based genuine LL pairs (replaces hardcoded y12,y34,… w12,…)
+            # Internal LL pairs, taken from the boundary condition groups above
+            # rather than assumed to be y12, y34, w12, ... .
             for na, _, nb, _, cname in ll_pairs_info:
                 defs.append((cname, (na, nb)))
             return defs
@@ -1254,10 +1290,10 @@ class FreeFermionModel:
             comment = str(row.get("Comments", "")).strip()
             state = str(row.get("State", ""))
 
-            # Use Comments only for unambiguous spin-2 and spin-3/2 identifications.
-            # V_RR/V_T and H_RR/H_T are no longer short-circuited here: spin for (8,8)
-            # sector states is derived directly from the sigma computation below so that
-            # it is independent of the Comments column.
+            # The Comments column is only used for the unambiguous spin-2 and
+            # spin-3/2 identifications. The spin of an (8,8) sector state comes
+            # from the sigma calculation below instead, so that the V_T/H_T
+            # flags do not feed back into the spin.
             if comment == "graviton":
                 return "2"
             if comment in (

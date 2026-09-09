@@ -26,10 +26,10 @@ rather than through `classify()`.
 
 ## Shared modules (this folder)
 
-- `classification_tools_all.py` — used by the
+- `classification_tools_all.py`: used by the
   `Z2L_2`, `Z2L_Z2R`, `Z2L_2_Z2R` and `Z2L_Z2` scripts.
-- `FF_equivalence_checker_master.py` — equivalence and modular-invariance checks.
-- `pointgroup_specs.py` — per-point group parameter ranges, basis
+- `FF_equivalence_checker_master.py`: equivalence and modular-invariance checks.
+- `pointgroup_specs.py`: per-point group parameter ranges, basis
   builders and table-15 labels.
 
 ## Running a script
@@ -43,13 +43,13 @@ python Z2L_2_Z2R_2/classify_Z2L_2_Z2R_2.py [--out-dir DIR] [--limit-left N] [--n
 python Z2L_Z2R_Z2/classify_Z2L_Z2R_Z2.py [--out-dir DIR]
 ```
 
-`--limit-left` allows for th `Z2L_2_Z2R_2` to be scanned initially for equivalences on the 
-left twist basis vectors to make more efficient.
+`--limit-left` lets the `Z2L_2_Z2R_2` scan reduce the left twist basis vectors
+by equivalence first, which makes the search more efficient.
 
 ## Outputs
 
 Each subfolder's `Outputs/` directory holds:
 
-- `*_inequivalent.csv` — one row per inequivalent configuration found.
-- `*_all_MI.csv` — every modular-invariant parameter choice, labelled by the
+- `*_inequivalent.csv`: one row per inequivalent configuration found.
+- `*_all_MI.csv`: every modular-invariant parameter choice, labelled by the
   equivalence class it belongs to.
