@@ -1,7 +1,6 @@
 # Spectrum Analysis
 
-Computes the massless spectrum of Z2 free fermionic Type II orbifold models
-across all nine order-two point-group classes.
+Computes the massless spectrum of order-two free fermionic Type II orbifold models.
 
 ### `TypeIIFreeFermioniser_v5.py`: the spectrum of a single model
 
