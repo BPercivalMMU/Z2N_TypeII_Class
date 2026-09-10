@@ -5,11 +5,13 @@ Computes the massless spectrum of order-two free fermionic Type II orbifold mode
 ### `TypeIIFreeFermioniser_v5.py`: the spectrum of a single model
 
 Given a set of basis vectors and a GGSO phase matrix, this
-computes the full massless spectrum for one model: it verifies modular
-invariance and GGSO consistency, works out the surviving states sector by
-sector and reports `SpectrumStats` (SUSY count, Rarita-Schwinger states,
-vector/hyper multiplet counts, spin content, ...). It writes both a raw
+computes the full massless spectrum for one model. It writes both a raw
 and a processed spectrum CSV.
+
+The script reads in the input basis and GGSOs, verifies modular
+invariance and consistency, works out the surviving states sector by
+sector and reports `SpectrumStats` (SUSY count, Rarita-Schwinger states,
+vector/hyper multiplet counts, spin content, ...). 
 
 Run standalone, it reads a single model's basis from
 `Input_typeII/InBasis.txt` and `Input_typeII/InGSO.txt` and writes to
@@ -22,15 +24,16 @@ Reads every row of the 9 input CSVs in
 `All_Z2N_Input_Models_updated_310826/` (one file per point-group class:
 `Z2`, `Z2_2`, `Z2L`, `Z2L_2`, `Z2L_Z2R`, `Z2L_2_Z2R`, `Z2L_2_Z2R_2`,
 `Z2L_Z2`, `Z2L_Z2R_Z2`), each carrying a `PaperLabel` column that gives the 
-model name in terms of I-VI, i-iii, A-E, a-c notation of paper (see below). For
-each row it builds the corresponding basis vector matrix, scans over the
-IIA/IIB choice and that class's significant GGSO phase
-variants and calls into `TypeIIFreeFermioniser_v5.py` to compute the
-processed spectrum for each combination.
+model name in terms of I,...,VI, i,...,iii, A,...,E, a,...,c notation of paper 
+(see below). For each row it builds the corresponding basis vector matrix, 
+scans over the IIA/IIB choice and that class's GGSO phase
+variant(s) that impose key projections determining the twisted sectors 
+and calls into `TypeIIFreeFermioniser_v5.py` to compute the processed spectrum 
+for each combination.
 
 A few key details:
 - **Basis construction**: each point group's basis vectors are built
-  from a row's tuple-valued shift parameters (e.g. `n`, `N` for $B_1$) by
+  from a row's tuple-valued shift parameters (e.g. `n`, `N` for $B_1$, etc) by
   the `build_basis_*` functions, one per class.
 - **GGSO scanning**: every class always scans both IIA and IIB; classes
   with more than one independent twist also scan the structural GGSO
@@ -61,7 +64,7 @@ multiplets itself.
 
 Every row in `All_Z2N_Input_Models_updated_310826/` carries a
 `PaperLabel` column giving that model's twist-vector classification in
-the paper's convention: `I`–`VI` (e.g. Z2L^2: $b_1,b_2$), `i`–`iii`
+the paper's convention: `I`,..,`VI` (e.g. Z2L^2: $b_1,b_2$), `i`,...,`iii`
 (single $b_1$/$b_{\bar1}$), `a`–`c` (symmetric $b_{1\bar1}$), and
-`A`–`E` (symmetric $b_{2\bar2}$), composed with `-` for classes built
+`A`,...,`E` (symmetric $b_{2\bar2}$), composed with `-` for classes built
 from more than one twist (e.g. `IV-ii.2`, `iii-iii-E.4`).
