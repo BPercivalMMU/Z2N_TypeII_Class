@@ -3,13 +3,6 @@
 Model 1 (N=0->1): Z2L_2_Z2R  has 6 basis vectors {1,S,Sbar,B1,B2,B1b}
 Model 2 (N=0->2): Z2L_2_Z2R_2 has 7 basis vectors {1,S,Sbar,B1,B2,B1b,B2b}
 
-Both use the IIB GGSO template with the following choices:
-  C(Sbar,Bα) = +1  (Bα = B1, B2)
-  C(S, B̄β)  = +1  (B̄β = B1b [model 1] or B1b, B2b [model 2])
-  C(Bα, B̄β) = +1  (every left/right pair; already the template's default)
-  C(S, Bα)   = -1  (default in template)
-  C(Sbar, B̄β) = -1 (default in template)
-
 Inputs are saved to:  inputs_nonSUSY_enhanced/
 Outputs are saved to: Non_SUSY_enhancement_models/
 """
