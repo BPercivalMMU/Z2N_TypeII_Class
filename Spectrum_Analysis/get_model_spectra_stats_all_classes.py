@@ -24,7 +24,7 @@ Basis structures
 
 Phase scanning
 --------------
-  IIA/IIB is initial choice, both used as starting points.
+  IIA/IIB both used as starting points.
     C(Sbar,Sbar) is not independently free, since modular invariance forces
     C(Sbar,Sbar) = -C(1,Sbar)
 
